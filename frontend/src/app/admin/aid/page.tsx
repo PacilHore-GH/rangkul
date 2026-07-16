@@ -8,44 +8,18 @@ import {
   createAidProgram,
 } from "@/lib/api";
 
-// ponytail: map backend enum values to colors and Indonesian labels
 const CATEGORIES = [
-  { value: "disability_support", label: "Disabilitas", colors: "bg-purple-900/50 text-purple-300 border-purple-800" },
-  { value: "health", label: "Kesehatan", colors: "bg-emerald-900/50 text-emerald-300 border-emerald-800" },
-  { value: "education", label: "Pendidikan", colors: "bg-blue-900/50 text-blue-300 border-blue-800" },
-  { value: "financial", label: "Keuangan", colors: "bg-amber-900/50 text-amber-300 border-amber-800" },
-  { value: "housing", label: "Perumahan", colors: "bg-orange-900/50 text-orange-300 border-orange-800" },
-  { value: "other", label: "Lainnya", colors: "bg-zinc-800 text-zinc-300 border-zinc-700" },
+  { value: "disability_support", label: "Disabilitas" },
+  { value: "health", label: "Kesehatan" },
+  { value: "education", label: "Pendidikan" },
+  { value: "financial", label: "Keuangan" },
+  { value: "housing", label: "Perumahan" },
+  { value: "other", label: "Lainnya" },
 ];
 
-const CATEGORY_COLORS: Record<string, string> = Object.fromEntries(
-  CATEGORIES.map((c) => [c.value, c.colors])
-);
-
 const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
-  CATEGORIES.map((c) => [c.value, c.label])
+  CATEGORIES.map((category) => [category.value, category.label]),
 );
-
-function categoryBadgeClass(category: string) {
-  return (
-    CATEGORY_COLORS[category.toLowerCase()] ||
-    "bg-zinc-800 text-zinc-300 border-zinc-700"
-  );
-}
-
-// ponytail: skeleton inline, no shared component
-function CardSkeleton() {
-  return (
-    <div className="border border-zinc-800 rounded-xl p-5 animate-pulse">
-      <div className="h-5 bg-zinc-800 rounded w-2/3 mb-3" />
-      <div className="h-4 bg-zinc-800/60 rounded w-1/3 mb-4" />
-      <div className="flex gap-2">
-        <div className="h-5 bg-zinc-800 rounded-full w-20" />
-        <div className="h-5 bg-zinc-800 rounded-full w-16" />
-      </div>
-    </div>
-  );
-}
 
 const INITIAL_FORM = {
   name: "",
@@ -58,6 +32,7 @@ const INITIAL_FORM = {
 
 export default function AidProgramsPage() {
   const router = useRouter();
+
   const [programs, setPrograms] = useState<AidProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -68,10 +43,11 @@ export default function AidProgramsPage() {
   async function load() {
     setLoading(true);
     setError("");
+
     try {
       setPrograms(await getAidPrograms());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal memuat data");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal memuat data");
     } finally {
       setLoading(false);
     }
@@ -81,136 +57,179 @@ export default function AidProgramsPage() {
     load();
   }, []);
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(event: React.FormEvent) {
+    event.preventDefault();
     setSubmitting(true);
+    setError("");
+
     try {
       await createAidProgram(form);
       setForm(INITIAL_FORM);
       setShowForm(false);
-      load();
+      await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal membuat program");
+      setError(
+        err instanceof Error ? err.message : "Gagal membuat program",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="mx-auto w-full max-w-[1200px]">
+      {/* Page header */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold leading-8 tracking-tight text-primary sm:text-[32px] sm:leading-10">
             Program Bantuan
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">
+
+          <p className="mt-1 text-base text-secondary">
             Kelola program bantuan pemerintah
           </p>
         </div>
+
         <button
-          onClick={() => setShowForm((v) => !v)}
-          className="px-4 py-2 text-sm font-medium bg-white text-zinc-900 rounded-lg hover:bg-zinc-200 transition-colors cursor-pointer"
+          type="button"
+          onClick={() => setShowForm((value) => !value)}
+          className="inline-flex min-h-11 items-center justify-center self-start rounded-xl bg-brand-primary px-4 text-sm font-medium text-inverse-text transition-colors duration-200 hover:bg-brand-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
-          {showForm ? "Batal" : "＋ Tambah Program"}
+          {showForm ? "Batal" : "Tambah program"}
         </button>
       </div>
 
-      {/* Create Form */}
+      {/* Create form */}
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="border border-zinc-800 rounded-xl p-6 mb-8 space-y-4 bg-zinc-900/50"
+          className="mb-8 space-y-5 rounded-2xl border border-default-border bg-surface p-5 sm:p-6"
         >
-          <h2 className="text-lg font-semibold mb-2">Program Baru</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <label className="block">
-              <span className="text-xs text-zinc-400 mb-1 block">
-                Nama Program
-              </span>
+          <div>
+            <h2 className="text-xl font-semibold leading-7 text-primary">
+              Program Baru
+            </h2>
+
+            <p className="mt-1 text-sm text-secondary">
+              Lengkapi informasi dasar program bantuan.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="Nama program">
               <input
                 required
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                onChange={(event) =>
+                  setForm({ ...form, name: event.target.value })
+                }
+                className={inputClassName}
                 placeholder="Contoh: Program Keluarga Harapan"
               />
-            </label>
-            <label className="block">
-              <span className="text-xs text-zinc-400 mb-1 block">
-                Penyedia
-              </span>
+            </FormField>
+
+            <FormField label="Penyedia">
               <input
                 required
                 value={form.provider}
-                onChange={(e) => setForm({ ...form, provider: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                placeholder="Contoh: Kemensos RI"
+                onChange={(event) =>
+                  setForm({ ...form, provider: event.target.value })
+                }
+                className={inputClassName}
+                placeholder="Contoh: Kementerian Sosial"
               />
-            </label>
-            <label className="block">
-              <span className="text-xs text-zinc-400 mb-1 block">
-                Kategori
-              </span>
+            </FormField>
+
+            <FormField label="Kategori">
               <select
                 required
                 value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                onChange={(event) =>
+                  setForm({ ...form, category: event.target.value })
+                }
+                className={inputClassName}
               >
-                <option value="">Pilih kategori…</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                <option value="">Pilih kategori</option>
+
+                {CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
+                  </option>
                 ))}
               </select>
-            </label>
-            <label className="block">
-              <span className="text-xs text-zinc-400 mb-1 block">Wilayah</span>
+            </FormField>
+
+            <FormField label="Wilayah">
               <input
                 required
                 value={form.jurisdiction}
-                onChange={(e) => setForm({ ...form, jurisdiction: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
-                placeholder="Contoh: Nasional / DKI Jakarta"
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    jurisdiction: event.target.value,
+                  })
+                }
+                className={inputClassName}
+                placeholder="Contoh: Nasional atau DKI Jakarta"
               />
-            </label>
-            <label className="block">
-              <span className="text-xs text-zinc-400 mb-1 block">Status</span>
-              <div className="flex items-center gap-2 mt-2">
+            </FormField>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-primary">
+                Status program
+              </legend>
+
+              <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl">
                 <input
                   type="checkbox"
                   checked={form.is_active}
-                  onChange={(e) =>
-                    setForm({ ...form, is_active: e.target.checked })
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      is_active: event.target.checked,
+                    })
                   }
-                  className="accent-emerald-500"
+                  className="h-5 w-5 accent-[var(--color-brand-primary)]"
                 />
-                <span className="text-sm text-zinc-300">Aktif</span>
-              </div>
-            </label>
+
+                <span className="text-base text-primary">
+                  Program aktif
+                </span>
+              </label>
+            </fieldset>
           </div>
-          <label className="block">
-            <span className="text-xs text-zinc-400 mb-1 block">
-              Deskripsi
-            </span>
+
+          <FormField label="Deskripsi">
             <textarea
               required
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  description: event.target.value,
+                })
               }
-              rows={3}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500 resize-none"
-              placeholder="Deskripsi singkat program…"
+              rows={4}
+              className={`${inputClassName} resize-y`}
+              placeholder="Deskripsi singkat program"
             />
-          </label>
-          <div className="flex justify-end">
+          </FormField>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="min-h-11 rounded-xl border border-strong-border bg-surface px-5 text-sm font-medium text-primary transition-colors duration-200 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              Batal
+            </button>
+
             <button
               type="submit"
               disabled={submitting}
-              className="px-5 py-2 text-sm font-medium bg-white text-zinc-900 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 cursor-pointer"
+              className="min-h-11 rounded-xl bg-brand-primary px-5 text-sm font-medium text-inverse-text transition-colors duration-200 hover:bg-brand-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "Menyimpan…" : "Simpan"}
+              {submitting ? "Menyimpan…" : "Simpan program"}
             </button>
           </div>
         </form>
@@ -218,80 +237,106 @@ export default function AidProgramsPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-900/30 border border-red-800 text-red-300 text-sm rounded-lg px-4 py-3 mb-6">
-          {error}
+        <div
+          role="alert"
+          className="mb-6 rounded-xl border border-[var(--color-error)]/35 bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]"
+        >
+          <p className="font-medium">Program belum dapat dimuat</p>
+          <p className="mt-1">{error}</p>
         </div>
       )}
 
       {/* Loading */}
       {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <CardSkeleton key={i} />
+        <div
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+          aria-label="Memuat program bantuan"
+        >
+          {Array.from({ length: 6 }).map((_, index) => (
+            <CardSkeleton key={index} />
           ))}
         </div>
       )}
 
       {/* Empty state */}
       {!loading && programs.length === 0 && !error && (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-4">📋</p>
-          <p className="text-zinc-400 text-lg">Belum ada program bantuan</p>
-          <p className="text-zinc-600 text-sm mt-1">
-            Klik &quot;Tambah Program&quot; untuk memulai
+        <div className="rounded-2xl border border-dashed border-default-border bg-surface px-5 py-16 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-subtle text-brand-primary">
+            <ClipboardIcon />
+          </div>
+
+          <p className="mt-4 text-lg font-semibold text-primary">
+            Belum ada program bantuan
+          </p>
+
+          <p className="mt-2 text-sm text-secondary">
+            Tambahkan program pertama untuk mulai mengelola data bantuan.
           </p>
         </div>
       )}
 
       {/* Program grid */}
       {!loading && programs.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {programs.map((p) => (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {programs.map((program) => (
             <button
-              key={p.id}
-              onClick={() => router.push(`/admin/aid/${p.id}`)}
-              className="text-left border border-zinc-800 rounded-xl p-5 hover:border-zinc-600 hover:bg-zinc-900/50 transition-all group cursor-pointer"
+              key={program.id}
+              type="button"
+              onClick={() => router.push(`/admin/aid/${program.id}`)}
+              className="group flex min-h-44 flex-col rounded-2xl border border-default-border bg-surface p-5 text-left transition-colors duration-200 hover:border-strong-border hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="font-semibold text-zinc-100 group-hover:text-white leading-tight">
-                  {p.name}
-                </h3>
-                {p.verification_status === "verified" && (
-                  <span title="Terverifikasi" className="text-blue-400 ml-2">
-                    ✓
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="text-lg font-semibold leading-6 text-primary">
+                  {program.name}
+                </h2>
+
+                {program.verification_status === "verified" && (
+                  <span
+                    title="Terverifikasi"
+                    aria-label="Program terverifikasi"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-info)]/10 text-[var(--color-info)]"
+                  >
+                    <VerifiedIcon />
                   </span>
                 )}
               </div>
 
-              <p className="text-xs text-zinc-500 mb-4">{p.provider}</p>
+              <p className="mt-3 text-sm text-secondary">
+                {program.provider}
+              </p>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
                 <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full border ${categoryBadgeClass(
-                    p.category
+                  className={`inline-flex min-h-8 items-center rounded-full border px-3 text-sm font-medium ${getCategoryBadgeClass(
+                    program.category,
                   )}`}
                 >
-                  {CATEGORY_LABELS[p.category] || p.category}
+                  {CATEGORY_LABELS[program.category] ??
+                    program.category}
                 </span>
 
                 <span
-                  className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full border ${
-                    p.is_active
-                      ? "bg-emerald-900/40 text-emerald-400 border-emerald-800"
-                      : "bg-zinc-800 text-zinc-500 border-zinc-700"
+                  className={`inline-flex min-h-8 items-center gap-2 rounded-full border px-3 text-sm font-medium ${
+                    program.is_active
+                      ? "border-[var(--color-success)]/35 bg-[var(--color-success)]/10 text-[var(--color-success)]"
+                      : "border-default-border bg-subtle text-secondary"
                   }`}
                 >
                   <span
-                    className={`inline-block w-1.5 h-1.5 rounded-full ${
-                      p.is_active ? "bg-emerald-400" : "bg-zinc-500"
+                    aria-hidden="true"
+                    className={`h-2 w-2 rounded-full ${
+                      program.is_active
+                        ? "bg-[var(--color-success)]"
+                        : "bg-secondary"
                     }`}
                   />
-                  {p.is_active ? "Aktif" : "Nonaktif"}
+
+                  {program.is_active ? "Aktif" : "Nonaktif"}
                 </span>
 
-                {p.rule_version_count > 0 && (
-                  <span className="text-[11px] text-zinc-500">
-                    {p.rule_version_count} aturan
+                {(program.rule_version_count ?? 0) > 0 && (
+                  <span className="text-sm text-secondary">
+                    {program.rule_version_count} aturan
                   </span>
                 )}
               </div>
@@ -300,5 +345,96 @@ export default function AidProgramsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+const inputClassName =
+  "min-h-11 w-full rounded-xl border border-default-border bg-surface px-3 py-2.5 text-base text-primary placeholder:text-secondary/70 focus:border-[var(--color-focus)] focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)]/20 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-secondary";
+
+function FormField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-medium text-primary">
+        {label}
+      </span>
+
+      {children}
+    </label>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="min-h-44 animate-pulse rounded-2xl border border-default-border bg-surface p-5">
+      <div className="h-5 w-3/4 rounded-lg bg-subtle" />
+      <div className="mt-4 h-4 w-2/5 rounded-lg bg-subtle" />
+
+      <div className="mt-8 flex gap-2">
+        <div className="h-8 w-24 rounded-full bg-subtle" />
+        <div className="h-8 w-20 rounded-full bg-subtle" />
+      </div>
+    </div>
+  );
+}
+
+function getCategoryBadgeClass(category: string) {
+  const classes: Record<string, string> = {
+    disability_support:
+      "border-[var(--color-info)]/35 bg-[var(--color-info)]/10 text-[var(--color-info)]",
+    health:
+      "border-[var(--color-success)]/35 bg-[var(--color-success)]/10 text-[var(--color-success)]",
+    education:
+      "border-[var(--color-info)]/35 bg-[var(--color-info)]/10 text-[var(--color-info)]",
+    financial:
+      "border-[var(--color-warning)]/35 bg-[var(--color-warning)]/10 text-[var(--color-warning)]",
+    housing:
+      "border-[var(--color-brand-accent)]/45 bg-[var(--color-brand-accent)]/15 text-primary",
+    other: "border-default-border bg-subtle text-secondary",
+  };
+
+  return classes[category] ?? classes.other;
+}
+
+function VerifiedIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+    >
+      <path d="m9 12 2 2 4-4" />
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
+function ClipboardIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-6 w-6"
+    >
+      <rect width="16" height="18" x="4" y="3" rx="2" />
+      <path d="M9 3h6v4H9z" />
+      <path d="M8 12h8" />
+      <path d="M8 16h5" />
+    </svg>
   );
 }

@@ -14,6 +14,7 @@ export interface AidProgram {
   current_rule_version: number | null;
   created_at: string;
   updated_at: string;
+  rule_version_count?: number;
 }
 
 export interface AidRule {

@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Rangkul brand */
+  --color-brand-primary: #347a69;
+  --color-brand-primary-hover: #2c695b;
+  --color-brand-primary-pressed: #24584d;
+  --color-brand-accent: #f2a64a;
+
+  /* Background */
+  --color-bg-canvas: #f7f3ea;
+  --color-bg-surface: #ffffff;
+  --color-bg-subtle: #eef4f1;
+  --color-bg-inverse: #21483e;
+
+  /* Text */
+  --color-text-primary: #21483e;
+  --color-text-secondary: #5f776f;
+  --color-text-inverse: #ffffff;
+  --color-text-link: #28695a;
+
+  /* Border and focus */
+  --color-border-default: #d8e0dc;
+  --color-border-strong: #a8b8b1;
+  --color-focus: #2e78a6;
+
+  /* Feedback */
+  --color-success: #5f8751;
+  --color-warning: #a46716;
+  --color-error: #b94f47;
+  --color-info: #526fa3;
+
+  /* App shell */
+  --admin-sidebar-width: 15rem;
+  --admin-topbar-height: 4rem;
+
+  --background: var(--color-bg-canvas);
+  --foreground: var(--color-text-primary);
 }
 
 @theme inline {
+  /* Base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+
+  /* Semantic color utilities */
+  --color-brand-primary: var(--color-brand-primary);
+  --color-brand-primary-hover: var(--color-brand-primary-hover);
+  --color-brand-primary-pressed: var(--color-brand-primary-pressed);
+  --color-brand-accent: var(--color-brand-accent);
+
+  --color-canvas: var(--color-bg-canvas);
+  --color-surface: var(--color-bg-surface);
+  --color-subtle: var(--color-bg-subtle);
+  --color-inverse: var(--color-bg-inverse);
+
+  --color-primary: var(--color-text-primary);
+  --color-secondary: var(--color-text-secondary);
+  --color-inverse-text: var(--color-text-inverse);
+  --color-link: var(--color-text-link);
+
+  --color-default-border: var(--color-border-default);
+  --color-strong-border: var(--color-border-strong);
+  --color-focus: var(--color-focus);
+
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
+
+  --font-sans:
+    var(--font-geist-sans), "Plus Jakarta Sans", Inter, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-bg-canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  margin: 0;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font-family:
+    var(--font-geist-sans),
+    "Plus Jakarta Sans",
+    Inter,
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
