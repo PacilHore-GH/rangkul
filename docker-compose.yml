@@ -14,6 +14,7 @@ services:
       - APP_NAME=Rangkul Backend API
       - DEBUG=True
       - CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
+      - FACILITY_ADMIN_TOKEN=${FACILITY_ADMIN_TOKEN:-}
     # We can override command for local live reload development
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
