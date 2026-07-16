@@ -44,7 +44,11 @@ def enforce_rate_limit(
     timestamp = int(now.timestamp())
     window_start = (now - timedelta(seconds=timestamp % window_seconds)).replace(microsecond=0)
     subject_hash = _subject_hash(subject)
-    db.execute(delete(RateLimitCounter).where(RateLimitCounter.expires_at <= now))
+    db.execute(
+        delete(RateLimitCounter)
+        .where(RateLimitCounter.expires_at <= now)
+        .execution_options(synchronize_session=False)
+    )
     counter = db.scalar(select(RateLimitCounter).where(
         RateLimitCounter.scope == scope,
         RateLimitCounter.subject_hash == subject_hash,
