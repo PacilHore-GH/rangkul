@@ -1,11 +1,12 @@
 import base64
 import binascii
 import math
-from datetime import date
+import uuid
+from datetime import UTC, date, datetime
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter()
 
@@ -54,6 +55,31 @@ class Facility(BaseModel):
 class FacilityList(BaseModel):
     items: list[Facility]
     next_cursor: str | None
+
+
+class FacilityCompare(BaseModel):
+    facility_ids: list[str] = Field(min_length=2, max_length=4)
+
+    @field_validator("facility_ids")
+    @classmethod
+    def require_unique_facilities(cls, value: list[str]) -> list[str]:
+        if len(set(value)) != len(value):
+            raise ValueError("Fasilitas yang dibandingkan harus unik.")
+        return value
+
+
+class FacilityReportCreate(BaseModel):
+    reason: Literal["wrong_information", "closed", "contact", "service", "other"]
+    details: str = Field(min_length=10, max_length=1000)
+
+
+class FacilityReport(BaseModel):
+    id: str
+    facility_id: str
+    reason: Literal["wrong_information", "closed", "contact", "service", "other"]
+    details: str
+    status: Literal["received"] = "received"
+    created_at: datetime
 
 
 # ponytail: demo catalog until the shared PostgreSQL foundation lands; replace
@@ -192,6 +218,8 @@ FACILITIES = [
     ),
 ]
 
+FACILITY_REPORTS: list[FacilityReport] = []
+
 
 def _distance_km(lat: float, lng: float, facility: Facility) -> float:
     lat1, lat2 = math.radians(lat), math.radians(facility.latitude)
@@ -289,6 +317,35 @@ def search_facilities(
         items=page,
         next_cursor=_encode_cursor(next_offset) if next_offset < len(results) else None,
     )
+
+
+@router.post("/compare", response_model=list[Facility])
+def compare_facilities(payload: FacilityCompare) -> list[Facility]:
+    facilities_by_id = {item.id: item for item in FACILITIES}
+    missing = [item_id for item_id in payload.facility_ids if item_id not in facilities_by_id]
+    if missing:
+        raise HTTPException(status_code=404, detail="Satu atau beberapa fasilitas tidak ditemukan.")
+
+    result = [facilities_by_id[item_id].model_copy(deep=True) for item_id in payload.facility_ids]
+    for facility in result:
+        facility.stale = facility.valid_until < date.today()
+    return result
+
+
+@router.post("/{facility_id}/report", response_model=FacilityReport, status_code=201)
+def report_facility(facility_id: str, payload: FacilityReportCreate) -> FacilityReport:
+    if not any(item.id == facility_id for item in FACILITIES):
+        raise HTTPException(status_code=404, detail="Fasilitas tidak ditemukan.")
+
+    report = FacilityReport(
+        id=f"frp_{uuid.uuid4().hex[:12]}",
+        facility_id=facility_id,
+        reason=payload.reason,
+        details=payload.details,
+        created_at=datetime.now(UTC),
+    )
+    FACILITY_REPORTS.append(report)
+    return report
 
 
 @router.get("/{facility_id}", response_model=Facility)
