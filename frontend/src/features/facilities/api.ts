@@ -26,6 +26,7 @@ export interface Facility {
   source_updated_at: string;
   valid_until: string;
   services: FacilityService[];
+  active: boolean;
   stale: boolean;
   distance_km: number | null;
 }
@@ -34,6 +35,19 @@ export interface FacilityList {
   items: Facility[];
   next_cursor: string | null;
 }
+
+export interface FacilityReport {
+  id: string;
+  facility_id: string;
+  reason: "wrong_information" | "closed" | "contact" | "service" | "other";
+  details: string;
+  status: "received" | "reviewing" | "resolved" | "dismissed";
+  created_at: string;
+  updated_at: string | null;
+  resolution_note: string | null;
+}
+
+export type FacilityInput = Omit<Facility, "id" | "stale" | "distance_km">;
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
@@ -123,4 +137,59 @@ export function googleMapsDirectionsUrl(facility: Facility): string {
     dir_action: "navigate",
   });
   return `https://www.google.com/maps/dir/?${params}`;
+}
+
+async function adminApi<T>(path: string, token: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}/admin/facilities${path}`, {
+    cache: "no-store",
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...init?.headers,
+    },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail || "Permintaan admin gagal.");
+  }
+  return response.json();
+}
+
+export function listAdminFacilities(token: string): Promise<Facility[]> {
+  return adminApi("", token);
+}
+
+export function saveAdminFacility(
+  token: string,
+  facility: FacilityInput,
+  id?: string,
+): Promise<Facility> {
+  return adminApi(id ? `/${encodeURIComponent(id)}` : "", token, {
+    method: id ? "PUT" : "POST",
+    body: JSON.stringify(facility),
+  });
+}
+
+export function setAdminFacilityActive(token: string, id: string, active: boolean): Promise<Facility> {
+  return adminApi(`/${encodeURIComponent(id)}/status`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ active }),
+  });
+}
+
+export function listAdminFacilityReports(token: string): Promise<FacilityReport[]> {
+  return adminApi("/reports", token);
+}
+
+export function updateAdminFacilityReport(
+  token: string,
+  id: string,
+  status: "reviewing" | "resolved" | "dismissed",
+  resolution_note?: string,
+): Promise<FacilityReport> {
+  return adminApi(`/reports/${encodeURIComponent(id)}`, token, {
+    method: "PATCH",
+    body: JSON.stringify({ status, resolution_note }),
+  });
 }
