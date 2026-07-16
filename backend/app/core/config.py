@@ -1,5 +1,5 @@
 import json
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     
     # CORS Origins can be a JSON string like '["http://localhost:3000"]' or a comma-separated list
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # Optional regular expression for trusted dynamic origins, such as Vercel previews.
+    CORS_ORIGIN_REGEX: Optional[str] = None
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

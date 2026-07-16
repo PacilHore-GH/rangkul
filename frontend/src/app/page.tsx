@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Item {
   id: string;
@@ -9,16 +9,12 @@ interface Item {
   status: string;
 }
 
-interface HealthStatus {
-  status: string;
-  service: string;
-  database: string;
-  version: string;
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const API_BASE = API_URL;
+const API_ORIGIN = API_URL.replace(/\/api\/v1\/?$/, "");
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
-  const [health, setHealth] = useState<HealthStatus | null>(null);
   const [isApiOnline, setIsApiOnline] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -29,11 +25,8 @@ export default function Home() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("Pending");
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const API_BASE = `${API_URL}/api/v1`;
-
   // Fetch health and items data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
@@ -42,8 +35,6 @@ export default function Home() {
         signal: AbortSignal.timeout(4000),
       });
       if (healthRes.ok) {
-        const healthData = await healthRes.json();
-        setHealth(healthData);
         setIsApiOnline(true);
       } else {
         setIsApiOnline(false);
@@ -58,15 +49,18 @@ export default function Home() {
     } catch (err) {
       console.error("Error communicating with backend:", err);
       setIsApiOnline(false);
-      setHealth(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = window.setTimeout(() => {
+      void fetchData();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [fetchData]);
 
   // Handle Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,7 +92,7 @@ export default function Home() {
       } else {
         setErrorMsg("Failed to add new item. Check your backend server log.");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Network error. Could not reach backend API.");
     } finally {
       setSubmitting(false);
@@ -116,7 +110,7 @@ export default function Home() {
       } else {
         setErrorMsg("Failed to delete item.");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Network error. Could not delete item.");
     }
   };
@@ -170,7 +164,7 @@ export default function Home() {
             )}
 
             <a
-              href={`${API_URL}/docs`}
+              href={`${API_ORIGIN}/docs`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 font-medium px-4 py-2 rounded-lg transition-all"
