@@ -51,3 +51,6 @@ yarn-error.log*
 Thumbs.db
 .agents
 .codex
+
+.vercel
+.env*
