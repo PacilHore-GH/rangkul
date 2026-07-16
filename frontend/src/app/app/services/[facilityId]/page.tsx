@@ -8,6 +8,7 @@ import {
   categoryLabels,
   getFacility,
   getSavedFacilityIds,
+  googleMapsDirectionsUrl,
   osmEmbedUrl,
   reportFacility,
   toggleSavedFacility,
@@ -126,6 +127,7 @@ export default function FacilityDetailPage() {
         <div className="p-6">
           <h2 id="location-title" className="text-2xl font-bold">Lokasi</h2>
           <p className="mt-2 text-sm text-slate-400">Jika peta tidak tersedia, gunakan alamat tertulis di atas.</p>
+          <a href={googleMapsDirectionsUrl(facility)} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-emerald-600 px-4 font-semibold hover:bg-emerald-500">Buka rute di Google Maps</a>
         </div>
         <iframe title={`Peta ${facility.name}`} src={osmEmbedUrl(facility)} className="h-80 w-full border-0" loading="lazy" referrerPolicy="no-referrer" />
       </section>

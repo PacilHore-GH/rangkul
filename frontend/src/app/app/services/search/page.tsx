@@ -6,6 +6,7 @@ import {
   Facility,
   categoryLabels,
   getSavedFacilityIds,
+  googleMapsDirectionsUrl,
   osmEmbedUrl,
   searchFacilities,
   toggleSavedFacility,
@@ -271,6 +272,7 @@ export default function FacilitySearchPage() {
               <p className="mt-4 text-xs text-slate-500">Sumber: {facility.source_name} · diperbarui {facility.source_updated_at}</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link href={`/app/services/${facility.id}`} className="flex min-h-11 items-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold hover:bg-indigo-500">Lihat detail</Link>
+                <a href={googleMapsDirectionsUrl(facility)} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center rounded-lg bg-emerald-600 px-4 text-sm font-semibold hover:bg-emerald-500">Buka rute</a>
                 <button onClick={() => setMapFacility(facility)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">Lihat di peta</button>
                 <button onClick={() => toggleSaved(facility.id)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">
                   {saved.includes(facility.id) ? "Hapus simpanan" : "Simpan"}

@@ -8,6 +8,7 @@ The navigator implements the PRD's public facility discovery flow:
 - Filter by category, BPJS, online booking, age, and accessibility.
 - Optional browser geolocation with a maximum 100 km radius.
 - List and OpenStreetMap views; the list remains usable without the map.
+- Open driving directions in Google Maps without an API key.
 - Facility details with source, verification, and freshness labels.
 - Save facilities in browser storage, compare 2–4 facilities, and report incorrect information.
 

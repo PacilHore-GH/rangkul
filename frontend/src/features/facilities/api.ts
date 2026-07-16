@@ -111,3 +111,13 @@ export function osmEmbedUrl(facility: Facility): string {
   const bbox = `${lng - 0.02},${lat - 0.02},${lng + 0.02},${lat + 0.02}`;
   return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${lat},${lng}`;
 }
+
+export function googleMapsDirectionsUrl(facility: Facility): string {
+  const params = new URLSearchParams({
+    api: "1",
+    destination: `${facility.latitude},${facility.longitude}`,
+    travelmode: "driving",
+    dir_action: "navigate",
+  });
+  return `https://www.google.com/maps/dir/?${params}`;
+}
