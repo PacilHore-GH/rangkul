@@ -25,6 +25,7 @@ export default function FacilitySearchPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [mapFacility, setMapFacility] = useState<Facility | null>(null);
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [nearbySearch, setNearbySearch] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
 
   const [query, setQuery] = useState("");
@@ -54,11 +55,16 @@ export default function FacilitySearchPage() {
     return params;
   }
 
-  async function load(cursor?: string, append = false, location = coordinates) {
+  async function load(
+    cursor?: string,
+    append = false,
+    location = nearbySearch ? coordinates : null,
+    clearFilters = false,
+  ) {
     setLoading(true);
     setError(null);
     try {
-      const result = await searchFacilities(buildParams(cursor, location));
+      const result = await searchFacilities(clearFilters ? new URLSearchParams() : buildParams(cursor, location));
       setItems((current) => (append ? [...current, ...result.items] : result.items));
       setNextCursor(result.next_cursor);
     } catch (requestError) {
@@ -83,7 +89,11 @@ export default function FacilitySearchPage() {
     void load();
   }
 
-  function useCurrentLocation() {
+  function withCurrentLocation(action: (location: Coordinates) => void) {
+    if (coordinates) {
+      action(coordinates);
+      return;
+    }
     if (!navigator.geolocation) {
       setLocationMessage("Browser ini tidak mendukung lokasi.");
       return;
@@ -93,13 +103,43 @@ export default function FacilitySearchPage() {
       ({ coords }) => {
         const location = { latitude: coords.latitude, longitude: coords.longitude };
         setCoordinates(location);
-        setMapFacility(null);
-        setLocationMessage("Hasil diurutkan dari lokasi Anda (maksimal 100 km). ");
-        void load(undefined, false, location);
+        action(location);
       },
       () => setLocationMessage("Lokasi tidak tersedia. Pencarian daftar tetap dapat digunakan."),
       { timeout: 8000 },
     );
+  }
+
+  function showCurrentLocation() {
+    withCurrentLocation(() => {
+      setMapFacility(null);
+      setLocationMessage("Lokasi Anda ditampilkan pada peta.");
+    });
+  }
+
+  function searchNearby() {
+    withCurrentLocation((location) => {
+      setMapFacility(null);
+      setNearbySearch(true);
+      setSavedOnly(false);
+      setLocationMessage("Menampilkan fasilitas dalam radius 100 km dari lokasi Anda.");
+      void load(undefined, false, location);
+    });
+  }
+
+  function showAllFacilities() {
+    setNearbySearch(false);
+    setSavedOnly(false);
+    setMapFacility(null);
+    setQuery("");
+    setRegion("");
+    setCategory("");
+    setService("");
+    setAcceptsBpjs(false);
+    setOnlineBooking(false);
+    setAccessibility("");
+    setLocationMessage("Menampilkan kembali semua fasilitas.");
+    void load(undefined, false, null, true);
   }
 
   function toggleSaved(id: string) {
@@ -192,11 +232,14 @@ export default function FacilitySearchPage() {
               <option value="sensory_friendly">Ramah sensorik</option>
             </select>
           </label>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-wrap items-end gap-2">
             <button type="submit" disabled={loading} className="min-h-11 flex-1 rounded-lg bg-indigo-600 px-4 font-semibold hover:bg-indigo-500 disabled:opacity-60">
               {loading ? "Mencari…" : "Cari"}
             </button>
-            <button type="button" onClick={useCurrentLocation} className="min-h-11 rounded-lg border border-slate-700 px-3 hover:bg-slate-800">
+            <button type="button" onClick={showCurrentLocation} className="min-h-11 rounded-lg border border-slate-700 px-3 hover:bg-slate-800">
+              Lokasi saya
+            </button>
+            <button type="button" onClick={searchNearby} className="min-h-11 rounded-lg border border-slate-700 px-3 hover:bg-slate-800">
               Di sekitar saya
             </button>
           </div>
@@ -206,9 +249,14 @@ export default function FacilitySearchPage() {
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-400" aria-live="polite">
-          {loading ? "Memuat hasil…" : `${visibleItems.length} fasilitas ditampilkan`}
+          {loading ? "Memuat hasil…" : `${visibleItems.length} fasilitas ditampilkan${nearbySearch ? " dalam radius 100 km" : ""}`}
         </p>
         <div className="flex flex-wrap gap-2">
+          {nearbySearch && (
+            <button onClick={showAllFacilities} className="min-h-11 rounded-lg bg-indigo-600 px-4 text-sm font-semibold hover:bg-indigo-500">
+              Lihat semua fasilitas
+            </button>
+          )}
           <button onClick={() => setSavedOnly((value) => !value)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">
             {savedOnly ? "Tampilkan semua" : `Tersimpan (${saved.length})`}
           </button>
@@ -232,7 +280,7 @@ export default function FacilitySearchPage() {
       {!mapFacility && !coordinates && (
         <section aria-labelledby="map-title" className="mb-8 rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
           <h2 id="map-title" className="font-semibold">Peta lokasi</h2>
-          <p className="mt-2 text-sm text-slate-400">Pilih “Di sekitar saya” untuk menampilkan posisi Anda dan fasilitas dalam radius 100 km.</p>
+          <p className="mt-2 text-sm text-slate-400">Pilih “Lokasi saya” untuk menampilkan posisi, atau “Di sekitar saya” untuk memfilter fasilitas dalam radius 100 km.</p>
         </section>
       )}
 
