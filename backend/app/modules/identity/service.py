@@ -19,11 +19,13 @@ def normalize_email(email: str) -> str:
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    # bcrypt rejects inputs above 72 bytes. Pre-hashing preserves the full
+    # password (including Unicode) instead of silently truncating it.
+    return bcrypt.hashpw(hashlib.sha256(password.encode("utf-8")).digest(), bcrypt.gensalt()).decode()
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
+    return bcrypt.checkpw(hashlib.sha256(password.encode("utf-8")).digest(), password_hash.encode())
 
 
 def _hash_token(token: str) -> str:
