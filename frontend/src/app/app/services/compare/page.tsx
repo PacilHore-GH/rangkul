@@ -40,7 +40,7 @@ function Comparison() {
   }, [idsParam]);
 
   if (loading) {
-    return <div className="h-72 animate-pulse rounded-2xl bg-slate-900" aria-label="Memuat perbandingan" />;
+    return <div className="h-72 animate-pulse rounded-2xl bg-slate-900 motion-reduce:animate-none" aria-label="Memuat perbandingan" />;
   }
 
   if (error) {
@@ -103,7 +103,7 @@ export default function ComparePage() {
         <h1 className="mt-2 text-3xl font-bold">Bandingkan fasilitas</h1>
         <p className="mt-3 text-slate-400">Periksa layanan, aksesibilitas, BPJS, sumber, dan kesegaran data berdampingan.</p>
       </div>
-      <Suspense fallback={<div className="h-72 animate-pulse rounded-2xl bg-slate-900" />}>
+      <Suspense fallback={<div className="h-72 animate-pulse rounded-2xl bg-slate-900 motion-reduce:animate-none" />}>
         <Comparison />
       </Suspense>
     </main>

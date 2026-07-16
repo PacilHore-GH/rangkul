@@ -47,7 +47,7 @@ export default function FacilityDetailPage() {
   }, [facilityId]);
 
   if (loading) {
-    return <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6" aria-busy="true"><div className="h-64 animate-pulse rounded-2xl bg-slate-900" /></main>;
+    return <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6" aria-busy="true"><div className="h-64 animate-pulse rounded-2xl bg-slate-900 motion-reduce:animate-none" /></main>;
   }
 
   if (error || !facility) {
@@ -127,7 +127,7 @@ export default function FacilityDetailPage() {
           <h2 id="location-title" className="text-2xl font-bold">Lokasi</h2>
           <p className="mt-2 text-sm text-slate-400">Jika peta tidak tersedia, gunakan alamat tertulis di atas.</p>
         </div>
-        <iframe title={`Peta ${facility.name}`} src={osmEmbedUrl(facility)} className="h-80 w-full border-0" loading="lazy" />
+        <iframe title={`Peta ${facility.name}`} src={osmEmbedUrl(facility)} className="h-80 w-full border-0" loading="lazy" referrerPolicy="no-referrer" />
       </section>
 
       <section aria-labelledby="report-title" className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">

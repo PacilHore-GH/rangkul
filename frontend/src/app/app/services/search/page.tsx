@@ -233,7 +233,7 @@ export default function FacilitySearchPage() {
             <h2 id="map-title" className="font-semibold">Peta: {mapFacility.name}</h2>
             <p className="mt-1 text-sm text-slate-400">Daftar di bawah tetap dapat digunakan jika peta gagal dimuat.</p>
           </div>
-          <iframe title={`Peta ${mapFacility.name}`} src={osmEmbedUrl(mapFacility)} className="h-72 w-full border-0" loading="lazy" />
+          <iframe title={`Peta ${mapFacility.name}`} src={osmEmbedUrl(mapFacility)} className="h-72 w-full border-0" loading="lazy" referrerPolicy="no-referrer" />
         </section>
       )}
 
