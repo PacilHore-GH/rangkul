@@ -1,7 +1,12 @@
 import os
 
+# Tests must not inherit deployment/editor variables from the parent process.
+# Some Git clients set DEBUG=release, which is not a valid boolean for Settings.
+os.environ["DEBUG"] = "False"
 os.environ["DATABASE_URL"] = "sqlite:///./test_rangkul.db"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-with-at-least-thirty-two-characters"
+os.environ["COOKIE_SECURE"] = "False"
+os.environ["COOKIE_SAMESITE"] = "lax"
 
 import pytest
 from fastapi.testclient import TestClient

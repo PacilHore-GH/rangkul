@@ -19,11 +19,13 @@ def normalize_email(email: str) -> str:
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    # bcrypt rejects inputs above 72 bytes. Pre-hashing preserves the full
+    # password (including Unicode) instead of silently truncating it.
+    return bcrypt.hashpw(hashlib.sha256(password.encode("utf-8")).digest(), bcrypt.gensalt()).decode()
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode(), password_hash.encode())
+    return bcrypt.checkpw(hashlib.sha256(password.encode("utf-8")).digest(), password_hash.encode())
 
 
 def _hash_token(token: str) -> str:
@@ -37,22 +39,60 @@ def _expired(value) -> bool:
 
 
 def create_session(db: Session, user: User) -> str:
-    raw_token = secrets.token_urlsafe(32)
+    token_secret = secrets.token_urlsafe(32)
+    issued_at = utcnow()
     expires_at = utcnow() + timedelta(hours=settings.SESSION_EXPIRE_HOURS)
-    db.add(UserSession(user_id=user.id, token_hash=_hash_token(raw_token), expires_at=expires_at))
+    session = UserSession(
+        user_id=user.id,
+        token_hash=_hash_token(token_secret),
+        expires_at=expires_at,
+    )
+    db.add(session)
+    db.flush()
     db.commit()
-    return jwt.encode({"sid": raw_token, "exp": expires_at}, settings.JWT_SECRET_KEY, algorithm="HS256")
+    return jwt.encode(
+        {
+            "typ": "session",
+            "sid": session.id,
+            "sub": user.id,
+            "jti": token_secret,
+            "iat": issued_at,
+            "exp": expires_at,
+        },
+        settings.JWT_SECRET_KEY,
+        algorithm="HS256",
+    )
+
+
+def _decode_session_token(encoded_token: str) -> dict:
+    claims = jwt.decode(
+        encoded_token,
+        settings.JWT_SECRET_KEY,
+        algorithms=["HS256"],
+        options={"require": ["typ", "sid", "sub", "jti", "iat", "exp"]},
+    )
+    if claims["typ"] != "session":
+        raise jwt.InvalidTokenError("Invalid token type.")
+    if not all(isinstance(claims[name], str) and claims[name] for name in ("sid", "sub", "jti")):
+        raise jwt.InvalidTokenError("Invalid session claims.")
+    return claims
 
 
 def get_current_user(db: Session, encoded_token: str | None) -> User:
     if not encoded_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autentikasi diperlukan.")
     try:
-        raw_token = jwt.decode(encoded_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])["sid"]
-    except (jwt.InvalidTokenError, KeyError):
+        claims = _decode_session_token(encoded_token)
+    except (jwt.InvalidTokenError, KeyError, TypeError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sesi tidak valid.")
-    session = db.scalar(select(UserSession).where(UserSession.token_hash == _hash_token(raw_token)))
-    if not session or session.revoked_at or _expired(session.expires_at):
+    session = db.get(UserSession, claims["sid"])
+    if (
+        not session
+        or session.user_id != claims["sub"]
+        or not secrets.compare_digest(session.token_hash, _hash_token(claims["jti"]))
+        or session.revoked_at
+        or _expired(session.expires_at)
+    ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sesi tidak valid.")
     user = db.get(User, session.user_id)
     if not user:
@@ -64,11 +104,16 @@ def revoke_session(db: Session, encoded_token: str | None) -> None:
     if not encoded_token:
         return
     try:
-        raw_token = jwt.decode(encoded_token, settings.JWT_SECRET_KEY, algorithms=["HS256"])["sid"]
-    except (jwt.InvalidTokenError, KeyError):
+        claims = _decode_session_token(encoded_token)
+    except (jwt.InvalidTokenError, KeyError, TypeError):
         return
-    session = db.scalar(select(UserSession).where(UserSession.token_hash == _hash_token(raw_token)))
-    if session and not session.revoked_at:
+    session = db.get(UserSession, claims["sid"])
+    if (
+        session
+        and session.user_id == claims["sub"]
+        and secrets.compare_digest(session.token_hash, _hash_token(claims["jti"]))
+        and not session.revoked_at
+    ):
         session.revoked_at = utcnow()
         db.commit()
 

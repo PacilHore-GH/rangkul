@@ -3,8 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from app.core.config import settings
 from app.api.router import api_router
-from app.db import Base, engine
-import app.models  # noqa: F401 - register ORM models
 import logging
 
 # Configure logging
@@ -19,8 +17,6 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
-
-Base.metadata.create_all(bind=engine)
 
 # Setup CORS middleware
 app.add_middleware(
