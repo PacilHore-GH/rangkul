@@ -67,6 +67,26 @@ export function getFacility(id: string, signal?: AbortSignal): Promise<Facility>
   return api(`/facilities/${encodeURIComponent(id)}`, { signal });
 }
 
+export function compareFacilities(ids: string[], signal?: AbortSignal): Promise<Facility[]> {
+  return api("/facilities/compare", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ facility_ids: ids }),
+    signal,
+  });
+}
+
+export function reportFacility(
+  id: string,
+  report: { reason: string; details: string },
+): Promise<{ id: string; status: "received" }> {
+  return api(`/facilities/${encodeURIComponent(id)}/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(report),
+  });
+}
+
 const SAVED_KEY = "rangkul:saved-facilities";
 
 export function getSavedFacilityIds(): string[] {

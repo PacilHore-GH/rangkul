@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Facility,
   categoryLabels,
   getFacility,
   getSavedFacilityIds,
   osmEmbedUrl,
+  reportFacility,
   toggleSavedFacility,
 } from "@/features/facilities/api";
 
@@ -25,6 +26,10 @@ export default function FacilityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [reportReason, setReportReason] = useState("wrong_information");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reporting, setReporting] = useState(false);
+  const [reportStatus, setReportStatus] = useState<"success" | "error" | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,6 +62,21 @@ export default function FacilityDetailPage() {
 
   function toggleSaved() {
     setSaved(toggleSavedFacility(facilityId).includes(facilityId));
+  }
+
+  async function submitReport(event: FormEvent) {
+    event.preventDefault();
+    setReporting(true);
+    setReportStatus(null);
+    try {
+      await reportFacility(facilityId, { reason: reportReason, details: reportDetails });
+      setReportDetails("");
+      setReportStatus("success");
+    } catch {
+      setReportStatus("error");
+    } finally {
+      setReporting(false);
+    }
   }
 
   return (
@@ -108,6 +128,41 @@ export default function FacilityDetailPage() {
           <p className="mt-2 text-sm text-slate-400">Jika peta tidak tersedia, gunakan alamat tertulis di atas.</p>
         </div>
         <iframe title={`Peta ${facility.name}`} src={osmEmbedUrl(facility)} className="h-80 w-full border-0" loading="lazy" />
+      </section>
+
+      <section aria-labelledby="report-title" className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+        <h2 id="report-title" className="text-2xl font-bold">Laporkan informasi yang salah</h2>
+        <p className="mt-2 text-sm text-slate-400">Laporan membantu tim memeriksa ulang data. Laporan tidak langsung mengubah informasi publik.</p>
+        <form onSubmit={submitReport} className="mt-5 max-w-2xl space-y-4">
+          <label className="block text-sm font-medium">
+            Jenis masalah
+            <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3">
+              <option value="wrong_information">Informasi salah</option>
+              <option value="closed">Fasilitas tutup</option>
+              <option value="contact">Kontak tidak aktif</option>
+              <option value="service">Layanan tidak tersedia</option>
+              <option value="other">Lainnya</option>
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            Detail laporan
+            <textarea
+              value={reportDetails}
+              onChange={(event) => setReportDetails(event.target.value)}
+              minLength={10}
+              maxLength={1000}
+              required
+              rows={4}
+              placeholder="Jelaskan informasi yang perlu diperiksa (minimal 10 karakter)."
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 p-3 outline-none focus:border-indigo-400"
+            />
+          </label>
+          {reportStatus === "success" && <p role="status" className="rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200">Laporan berhasil diterima. Terima kasih.</p>}
+          {reportStatus === "error" && <p role="alert" className="rounded-lg bg-rose-500/10 p-3 text-sm text-rose-200">Laporan gagal dikirim. Silakan coba lagi.</p>}
+          <button type="submit" disabled={reporting || reportDetails.trim().length < 10} className="min-h-11 rounded-lg bg-indigo-600 px-5 font-semibold hover:bg-indigo-500 disabled:opacity-50">
+            {reporting ? "Mengirim…" : "Kirim laporan"}
+          </button>
+        </form>
       </section>
     </main>
   );
