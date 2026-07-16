@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { api } = vi.hoisted(() => ({ api: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/lib/api", () => ({ api, ApiError: class ApiError extends Error {} }));
+vi.mock("@/lib/api", () => ({
+  api,
+  createIdempotencyKey: () => "11111111-1111-4111-8111-111111111111",
+  ApiError: class ApiError extends Error {},
+}));
 
 import { OnboardingWizard } from "./onboarding-wizard";
 
@@ -23,6 +27,10 @@ describe("OnboardingWizard", () => {
     expect(screen.getByText("Kebutuhan dukungan")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Komunikasi"));
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+    expect(screen.getByText("Preferensi komunikasi dan aksesibilitas")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Dukungan visual"));
+    fireEvent.click(screen.getByLabelText("Lingkungan lebih tenang"));
+    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     expect(screen.getByText("Adit")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Selesaikan profil" }));
@@ -37,6 +45,9 @@ describe("OnboardingWizard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     fireEvent.click(screen.getByLabelText("Komunikasi"));
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
+    fireEvent.click(screen.getByLabelText("Dukungan visual"));
+    fireEvent.click(screen.getByLabelText("Lingkungan lebih tenang"));
+    fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     fireEvent.change(screen.getByPlaceholderText(/lebih nyaman/), {
       target: { value: "Catatan <b>aman</b><script>alert(1)</script>" },
     });
@@ -50,7 +61,11 @@ describe("OnboardingWizard", () => {
     expect(JSON.parse(request.body)).toMatchObject({
       display_name: "Adit",
       birth_year: 2020,
+      communication_preferences: ["visual_support"],
+      accessibility_preferences: ["reduced_noise"],
+      primary_language: "id",
       notes: "Catatan aman",
     });
+    expect(request.headers["Idempotency-Key"]).toEqual(expect.any(String));
   });
 });

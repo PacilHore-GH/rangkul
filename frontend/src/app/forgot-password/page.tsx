@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { api, ApiError } from "@/lib/api";
-import { assertValidEmail, InputValidationError } from "@/lib/validation";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -18,11 +17,11 @@ export default function ForgotPasswordPage() {
     try {
       await api("/auth/password-reset/request", {
         method: "POST",
-        body: JSON.stringify({ email: assertValidEmail(email) }),
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       setDone(true);
     } catch (err) {
-      if (err instanceof InputValidationError || err instanceof ApiError) setError(err.message);
+      if (err instanceof ApiError) setError(err.message);
       else setError("Permintaan belum berhasil dikirim. Periksa koneksi Anda lalu coba lagi.");
     } finally {
       setLoading(false);

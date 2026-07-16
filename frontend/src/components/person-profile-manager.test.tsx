@@ -5,6 +5,7 @@ const { api, push } = vi.hoisted(() => ({ api: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: push, refresh: vi.fn() }) }));
 vi.mock("@/lib/api", () => ({
   api,
+  createIdempotencyKey: () => "11111111-1111-4111-8111-111111111111",
   ApiError: class ApiError extends Error {
     constructor(public status: number, message: string) { super(message); }
   },
@@ -17,6 +18,9 @@ const person = {
   display_name: "Adit",
   birth_year: 2020,
   support_needs: ["communication"],
+  communication_preferences: ["visual_support"],
+  accessibility_preferences: ["reduced_noise"],
+  primary_language: "id",
   notes: "Suka rutinitas.",
 };
 
@@ -67,6 +71,7 @@ describe("PersonProfileManager", () => {
 
     await waitFor(() => expect(api).toHaveBeenLastCalledWith("/people", expect.objectContaining({
       method: "POST",
+      headers: expect.objectContaining({ "Idempotency-Key": expect.any(String) }),
     })));
   });
 });

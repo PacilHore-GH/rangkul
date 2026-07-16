@@ -27,7 +27,7 @@ def test_upgrade_adopts_an_existing_unversioned_schema(tmp_path, monkeypatch):
     command.upgrade(config, "head")
 
     with engine.connect() as connection:
-        assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "20260716_03"
+        assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "20260716_04"
         assert connection.execute(text("SELECT email FROM users WHERE id = 'legacy-user'")).scalar_one() == (
             "legacy@example.com"
         )

@@ -2,17 +2,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, ApiError, Person } from "@/lib/api";
+import { api, ApiError, createIdempotencyKey, Person } from "@/lib/api";
+import {
+  accessibilityOptions,
+  communicationOptions,
+  languageOptions,
+  supportNeedOptions,
+} from "@/lib/person-options";
 import { sanitizeMultiline, sanitizeSingleLine } from "@/lib/validation";
-
-const supportNeedOptions = [
-  ["communication", "Komunikasi"],
-  ["learning", "Belajar"],
-  ["mobility", "Mobilitas"],
-  ["sensory", "Sensori"],
-  ["daily_living", "Aktivitas harian"],
-  ["social_emotional", "Sosial & emosi"],
-] as const;
 
 export function PersonProfileManager() {
   const router = useRouter();
@@ -25,8 +22,12 @@ export function PersonProfileManager() {
   const [displayName, setDisplayName] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [supportNeeds, setSupportNeeds] = useState<string[]>([]);
+  const [communication, setCommunication] = useState<string[]>([]);
+  const [accessibility, setAccessibility] = useState<string[]>([]);
+  const [primaryLanguage, setPrimaryLanguage] = useState("id");
   const [notes, setNotes] = useState("");
   const [consent, setConsent] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState(createIdempotencyKey);
 
   useEffect(() => {
     api<Person[]>("/people")
@@ -45,8 +46,12 @@ export function PersonProfileManager() {
     setDisplayName("");
     setBirthYear("");
     setSupportNeeds([]);
+    setCommunication([]);
+    setAccessibility([]);
+    setPrimaryLanguage("id");
     setNotes("");
     setConsent(false);
+    setIdempotencyKey(createIdempotencyKey());
     setError("");
   }
 
@@ -60,6 +65,9 @@ export function PersonProfileManager() {
     setDisplayName(person.display_name);
     setBirthYear(person.birth_year?.toString() ?? "");
     setSupportNeeds(person.support_needs);
+    setCommunication(person.communication_preferences);
+    setAccessibility(person.accessibility_preferences);
+    setPrimaryLanguage(person.primary_language);
     setNotes(person.notes ?? "");
     setError("");
     setMode("edit");
@@ -67,6 +75,15 @@ export function PersonProfileManager() {
 
   function toggleNeed(code: string) {
     setSupportNeeds((current) => current.includes(code)
+      ? current.filter((item) => item !== code)
+      : [...current, code]);
+  }
+
+  function togglePreference(
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    code: string,
+  ) {
+    setter((current) => current.includes(code)
       ? current.filter((item) => item !== code)
       : [...current, code]);
   }
@@ -91,11 +108,15 @@ export function PersonProfileManager() {
         display_name: cleanName,
         birth_year: birthYear ? Number(birthYear) : null,
         support_needs: supportNeeds,
+        communication_preferences: communication,
+        accessibility_preferences: accessibility,
+        primary_language: primaryLanguage,
         notes: notes ? sanitizeMultiline(notes, 1000) : null,
         ...(mode === "create" ? { consent } : {}),
       };
       const saved = await api<Person>(mode === "create" ? "/people" : `/people/${selected!.id}`, {
         method: mode === "create" ? "POST" : "PATCH",
+        headers: mode === "create" ? { "Idempotency-Key": idempotencyKey } : undefined,
         body: JSON.stringify(payload),
       });
       setPeople((current) => mode === "create"
@@ -171,6 +192,15 @@ export function PersonProfileManager() {
       <fieldset className="profile-fieldset"><legend>Kebutuhan dukungan</legend><div className="needs">
         {supportNeedOptions.map(([code, label]) => <label key={code} className={`need ${supportNeeds.includes(code) ? "chosen" : ""}`}><input type="checkbox" checked={supportNeeds.includes(code)} onChange={() => toggleNeed(code)} />{label}</label>)}
       </div></fieldset>
+      <fieldset className="profile-fieldset"><legend>Preferensi komunikasi</legend><div className="needs">
+        {communicationOptions.map(([code, label]) => <label key={code} className={`need ${communication.includes(code) ? "chosen" : ""}`}><input type="checkbox" checked={communication.includes(code)} onChange={() => togglePreference(setCommunication, code)} />{label}</label>)}
+      </div></fieldset>
+      <fieldset className="profile-fieldset"><legend>Preferensi aksesibilitas</legend><div className="needs">
+        {accessibilityOptions.map(([code, label]) => <label key={code} className={`need ${accessibility.includes(code) ? "chosen" : ""}`}><input type="checkbox" checked={accessibility.includes(code)} onChange={() => togglePreference(setAccessibility, code)} />{label}</label>)}
+      </div></fieldset>
+      <label>Bahasa utama<select className="field" value={primaryLanguage} onChange={(event) => setPrimaryLanguage(event.target.value)}>
+        {languageOptions.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+      </select></label>
       <label>Catatan <span className="muted">(opsional)</span><textarea className="field" rows={5} maxLength={1000} value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
       {mode === "create" && <label className="check"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /> Saya berwenang mengelola profil orang yang didampingi.</label>}
       {error && <p role="alert" className="form-error">{error}</p>}

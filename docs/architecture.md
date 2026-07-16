@@ -15,4 +15,4 @@ Frontend mengikuti batas yang sama: route App Router tetap tipis dan UI/domain l
 
 ## Skalabilitas operasional
 
-API stateless selain cookie yang tervalidasi terhadap tabel `sessions`, sehingga instance backend dapat ditambah horizontal. PostgreSQL merupakan source of truth; index unik email, index session per user, dan satu profil per owner sudah disediakan. Redis/queue belum ditambahkan karena belum dibutuhkan MVP; worker dapat ditambahkan sebagai adapter terpisah untuk email, media, dan AI tanpa mengubah kontrak modul.
+API stateless selain cookie yang tervalidasi terhadap tabel `sessions`, sehingga instance backend dapat ditambah horizontal. PostgreSQL merupakan source of truth; index unik email, index session per user, rate-limit counters, idempotency records, dan beberapa Person Profile per caregiver sudah disediakan. Redis/queue belum ditambahkan karena belum dibutuhkan MVP; policy rate limit dan adapter mailer dapat diganti implementasinya tanpa mengubah kontrak HTTP.

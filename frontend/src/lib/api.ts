@@ -6,6 +6,10 @@ export class ApiError extends Error {
   }
 }
 
+export function createIdempotencyKey(): string {
+  return globalThis.crypto.randomUUID();
+}
+
 type ValidationIssue = {
   loc?: Array<string | number>;
   msg?: string;
@@ -37,6 +41,7 @@ function validationMessage(issue: ValidationIssue): string {
     if (message.includes("at most") || issue.type === "string_too_long") return "Kata sandi tidak boleh lebih dari 128 karakter.";
     return issue.msg ?? "Kata sandi belum memenuhi ketentuan keamanan.";
   }
+  if (issue.type === "extra_forbidden") return `Kolom ${field || "tersebut"} tidak diperbolehkan.`;
   if (issue.type === "missing") return `Mohon isi ${label}.`;
   if (message.includes("greater than or equal")) return `${label[0].toUpperCase()}${label.slice(1)} terlalu kecil.`;
   if (message.includes("less than or equal")) return `${label[0].toUpperCase()}${label.slice(1)} melebihi batas yang diperbolehkan.`;
@@ -55,9 +60,9 @@ function errorMessage(detail: unknown): string {
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
+    ...options,
     credentials: "include",
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -78,4 +83,13 @@ export type CurrentUser = {
   has_profile: boolean;
   onboarding_completed: boolean;
 };
-export type Person = { id: string; display_name: string; birth_year: number | null; support_needs: string[]; notes: string | null };
+export type Person = {
+  id: string;
+  display_name: string;
+  birth_year: number | null;
+  support_needs: string[];
+  communication_preferences: string[];
+  accessibility_preferences: string[];
+  primary_language: string;
+  notes: string | null;
+};

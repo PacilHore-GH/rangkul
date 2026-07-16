@@ -2,20 +2,32 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, status
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.schemas import StrictInputModel
+from app.core.security import require_trusted_origin
 from app.core.text import sanitize_multiline
 from app.db import get_db
 from app.models import PersonProfile, User, utcnow
 from app.modules.identity.router import clean_name
 from app.modules.identity.service import get_current_user
+from app.modules.people.idempotency import find_record, request_hash, store_record, validate_idempotency_key
 
 router = APIRouter()
 SUPPORT_NEED_CODES = {"communication", "learning", "mobility", "sensory", "daily_living", "social_emotional"}
+COMMUNICATION_CODES = {
+    "short_instructions", "visual_support", "gesture", "aac", "sign_language", "extra_processing_time",
+}
+ACCESSIBILITY_CODES = {
+    "reduced_noise", "reduced_motion", "high_contrast", "large_text", "wheelchair_access", "quiet_space",
+}
+LANGUAGE_CODES = {"id", "en", "jv", "su"}
 
 
 def validate_support_needs(values: list[str]) -> list[str]:
@@ -30,10 +42,19 @@ def normalize_notes(value: str | None) -> str | None:
     return sanitize_multiline(value, 1000) or None
 
 
-class PersonCreateInput(BaseModel):
+def validate_catalog(values: list[str], catalog: set[str], label: str) -> list[str]:
+    if len(set(values)) != len(values) or any(value not in catalog for value in values):
+        raise ValueError(f"{label} tidak valid.")
+    return values
+
+
+class PersonCreateInput(StrictInputModel):
     display_name: str
     birth_year: int | None = Field(default=None, ge=1900, le=2026)
     support_needs: list[str] = Field(min_length=1, max_length=10)
+    communication_preferences: list[str] = Field(default_factory=list, max_length=10)
+    accessibility_preferences: list[str] = Field(default_factory=list, max_length=10)
+    primary_language: str = "id"
     notes: str | None = Field(default=None, max_length=1000)
     consent: bool
 
@@ -46,6 +67,23 @@ class PersonCreateInput(BaseModel):
     @classmethod
     def validate_needs(cls, values: list[str]) -> list[str]:
         return validate_support_needs(values)
+
+    @field_validator("communication_preferences")
+    @classmethod
+    def validate_communication(cls, values: list[str]) -> list[str]:
+        return validate_catalog(values, COMMUNICATION_CODES, "Preferensi komunikasi")
+
+    @field_validator("accessibility_preferences")
+    @classmethod
+    def validate_accessibility(cls, values: list[str]) -> list[str]:
+        return validate_catalog(values, ACCESSIBILITY_CODES, "Preferensi aksesibilitas")
+
+    @field_validator("primary_language")
+    @classmethod
+    def validate_language(cls, value: str) -> str:
+        if value not in LANGUAGE_CODES:
+            raise ValueError("Bahasa utama tidak valid.")
+        return value
 
     @field_validator("notes")
     @classmethod
@@ -60,10 +98,13 @@ class PersonCreateInput(BaseModel):
         return value
 
 
-class PersonUpdateInput(BaseModel):
+class PersonUpdateInput(StrictInputModel):
     display_name: str | None = None
     birth_year: int | None = Field(default=None, ge=1900, le=2026)
     support_needs: list[str] | None = Field(default=None, min_length=1, max_length=10)
+    communication_preferences: list[str] | None = Field(default=None, max_length=10)
+    accessibility_preferences: list[str] | None = Field(default=None, max_length=10)
+    primary_language: str | None = None
     notes: str | None = Field(default=None, max_length=1000)
 
     @field_validator("display_name")
@@ -80,6 +121,27 @@ class PersonUpdateInput(BaseModel):
             raise ValueError("Kebutuhan dukungan tidak boleh kosong.")
         return validate_support_needs(values)
 
+    @field_validator("communication_preferences")
+    @classmethod
+    def validate_communication(cls, values: list[str] | None) -> list[str] | None:
+        if values is None:
+            raise ValueError("Preferensi komunikasi tidak boleh null.")
+        return validate_catalog(values, COMMUNICATION_CODES, "Preferensi komunikasi")
+
+    @field_validator("accessibility_preferences")
+    @classmethod
+    def validate_accessibility(cls, values: list[str] | None) -> list[str] | None:
+        if values is None:
+            raise ValueError("Preferensi aksesibilitas tidak boleh null.")
+        return validate_catalog(values, ACCESSIBILITY_CODES, "Preferensi aksesibilitas")
+
+    @field_validator("primary_language")
+    @classmethod
+    def validate_language(cls, value: str | None) -> str | None:
+        if value is None or value not in LANGUAGE_CODES:
+            raise ValueError("Bahasa utama tidak valid.")
+        return value
+
     @field_validator("notes")
     @classmethod
     def trim_notes(cls, value: str | None) -> str | None:
@@ -91,6 +153,9 @@ class PersonOutput(BaseModel):
     display_name: str
     birth_year: int | None
     support_needs: list[str]
+    communication_preferences: list[str]
+    accessibility_preferences: list[str]
+    primary_language: str
     notes: str | None
     model_config = {"from_attributes": True}
 
@@ -118,23 +183,69 @@ def build_person(payload: PersonCreateInput, user: User) -> PersonProfile:
         display_name=payload.display_name,
         birth_year=payload.birth_year,
         support_needs=payload.support_needs,
+        communication_preferences=payload.communication_preferences,
+        accessibility_preferences=payload.accessibility_preferences,
+        primary_language=payload.primary_language,
         notes=payload.notes,
         consented_at=utcnow(),
     )
 
 
+def commit_idempotent_create(
+    db: Session,
+    *,
+    user_id: str,
+    operation: str,
+    key: str,
+    payload_hash: str,
+) -> JSONResponse | None:
+    try:
+        db.commit()
+        return None
+    except IntegrityError:
+        db.rollback()
+        existing = find_record(db, user_id, operation, key)
+        if not existing:
+            raise
+        if existing.request_hash != payload_hash:
+            raise HTTPException(status_code=409, detail="Idempotency-Key sudah digunakan untuk payload berbeda.")
+        return JSONResponse(existing.response_body, status_code=existing.response_status)
+
+
 @router.post("/onboarding", response_model=PersonOutput, status_code=status.HTTP_201_CREATED)
 def complete_onboarding(
     payload: PersonCreateInput,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
-) -> PersonProfile:
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> PersonProfile | JSONResponse:
+    require_trusted_origin(request)
+    key = validate_idempotency_key(idempotency_key)
+    payload_hash = request_hash(payload.model_dump(mode="json"))
+    existing = find_record(db, user.id, "people_onboarding", key)
+    if existing:
+        if existing.request_hash != payload_hash:
+            raise HTTPException(status_code=409, detail="Idempotency-Key sudah digunakan untuk payload berbeda.")
+        return JSONResponse(existing.response_body, status_code=existing.response_status)
     if user.onboarding_completed_at is not None:
         raise HTTPException(status_code=409, detail="Onboarding sudah diselesaikan.")
     person = build_person(payload, user)
     user.onboarding_completed_at = utcnow()
     db.add(person)
-    db.commit()
+    db.flush()
+    body = PersonOutput.model_validate(person).model_dump(mode="json")
+    store_record(db, user_id=user.id, operation="people_onboarding", key=key,
+                 payload_hash=payload_hash, status_code=201, response_body=body)
+    replay = commit_idempotent_create(
+        db,
+        user_id=user.id,
+        operation="people_onboarding",
+        key=key,
+        payload_hash=payload_hash,
+    )
+    if replay:
+        return replay
     db.refresh(person)
     return person
 
@@ -142,14 +253,36 @@ def complete_onboarding(
 @router.post("", response_model=PersonOutput, status_code=status.HTTP_201_CREATED)
 def create_person(
     payload: PersonCreateInput,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
-) -> PersonProfile:
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> PersonProfile | JSONResponse:
+    require_trusted_origin(request)
     if user.onboarding_completed_at is None:
         raise HTTPException(status_code=409, detail="Selesaikan onboarding sebelum membuat profil.")
+    key = validate_idempotency_key(idempotency_key)
+    payload_hash = request_hash(payload.model_dump(mode="json"))
+    existing = find_record(db, user.id, "people_create", key)
+    if existing:
+        if existing.request_hash != payload_hash:
+            raise HTTPException(status_code=409, detail="Idempotency-Key sudah digunakan untuk payload berbeda.")
+        return JSONResponse(existing.response_body, status_code=existing.response_status)
     person = build_person(payload, user)
     db.add(person)
-    db.commit()
+    db.flush()
+    body = PersonOutput.model_validate(person).model_dump(mode="json")
+    store_record(db, user_id=user.id, operation="people_create", key=key,
+                 payload_hash=payload_hash, status_code=201, response_body=body)
+    replay = commit_idempotent_create(
+        db,
+        user_id=user.id,
+        operation="people_create",
+        key=key,
+        payload_hash=payload_hash,
+    )
+    if replay:
+        return replay
     db.refresh(person)
     return person
 
@@ -184,9 +317,11 @@ def get_person(person_id: str, db: Session = Depends(get_db), user: User = Depen
 def update_person(
     person_id: str,
     payload: PersonUpdateInput,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ) -> PersonProfile:
+    require_trusted_origin(request)
     person = owned_person_or_404(db, user, person_id)
     updates = payload.model_dump(exclude_unset=True)
     for field, value in updates.items():
@@ -199,9 +334,11 @@ def update_person(
 @router.delete("/{person_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_person(
     person_id: str,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(current_user),
 ) -> None:
+    require_trusted_origin(request)
     person = owned_person_or_404(db, user, person_id)
     db.delete(person)
     db.commit()

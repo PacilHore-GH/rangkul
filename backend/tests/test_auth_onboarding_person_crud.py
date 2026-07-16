@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from app.models import User
 
 
@@ -37,7 +39,11 @@ def test_onboarding_is_authenticated_and_can_only_be_completed_once(client):
     completed = http.post("/api/v1/people/onboarding", json=PERSON)
     assert completed.status_code == 201
     assert http.get("/api/v1/auth/me").json()["onboarding_completed"] is True
-    assert http.post("/api/v1/people/onboarding", json=PERSON).status_code == 409
+    assert http.post(
+        "/api/v1/people/onboarding",
+        json=PERSON,
+        headers={"Idempotency-Key": str(uuid4())},
+    ).status_code == 409
 
 
 def test_person_profile_owner_can_manage_multiple_people_without_reopening_onboarding(client):
@@ -62,6 +68,9 @@ def test_person_profile_owner_can_manage_multiple_people_without_reopening_onboa
         "display_name": "Adit Pratama",
         "birth_year": None,
         "support_needs": ["learning"],
+        "communication_preferences": [],
+        "accessibility_preferences": [],
+        "primary_language": "id",
         "notes": None,
     }
 
@@ -83,7 +92,11 @@ def test_person_profile_owner_can_manage_multiple_people_without_reopening_onboa
     assert current_user["onboarding_completed"] is True
     assert current_user["has_profile"] is True
     assert [person["display_name"] for person in http.get("/api/v1/people").json()] == ["Naya"]
-    assert http.post("/api/v1/people/onboarding", json=PERSON).status_code == 409
+    assert http.post(
+        "/api/v1/people/onboarding",
+        json=PERSON,
+        headers={"Idempotency-Key": str(uuid4())},
+    ).status_code == 409
 
 
 def test_person_crud_requires_completed_onboarding_and_enforces_ownership(client):

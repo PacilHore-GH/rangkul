@@ -7,6 +7,8 @@ os.environ["DATABASE_URL"] = "sqlite:///./test_rangkul.db"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-with-at-least-thirty-two-characters"
 os.environ["COOKIE_SECURE"] = "False"
 os.environ["COOKIE_SAMESITE"] = "lax"
+os.environ["TRUSTED_ORIGINS"] = '["http://testserver"]'
+os.environ["CSRF_ENABLED"] = "True"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -31,6 +33,9 @@ def client(tmp_path):
             db.close()
 
     app.dependency_overrides[get_db] = override_db
-    with TestClient(app) as test_client:
+    with TestClient(app, headers={
+        "Origin": "http://testserver",
+        "Idempotency-Key": "11111111-1111-4111-8111-111111111111",
+    }) as test_client:
         yield test_client, testing_session
     app.dependency_overrides.clear()

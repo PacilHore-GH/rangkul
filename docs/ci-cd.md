@@ -22,6 +22,13 @@ in Railway:
 - `CORS_ORIGINS=https://<production-frontend-domain>`
 - `CORS_ORIGIN_REGEX=^https://.*\\.vercel\\.app$`
 - `DATABASE_URL=<Supabase Session Pooler connection string>`
+- `JWT_SECRET_KEY=<random production secret>`
+- `COOKIE_SECURE=True`
+- `COOKIE_SAMESITE=lax`
+- `FRONTEND_URL=https://<production-frontend-domain>`
+- `TRUSTED_ORIGINS=["https://<production-frontend-domain>"]`
+- `CSRF_ENABLED=True`
+- `MAILER_BACKEND=console` hanya untuk demo; ganti adapter provider sebelum production
 
 `backend/railway.toml` defines the Docker build, health check at `/api/v1/health`, and restart
 policy. In the Railway service settings, set the config-file path to `/backend/railway.toml` if the
