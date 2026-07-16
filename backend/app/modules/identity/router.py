@@ -136,7 +136,26 @@ def login(
     enforce_rate_limit(db, scope="login_ip", subject=ip, limit=10, window_seconds=900)
     enforce_rate_limit(db, scope="login_email", subject=normalized_email, limit=5, window_seconds=900)
     user = db.scalar(select(User).where(User.email == normalized_email))
-    if not user or not verify_password(payload.password, user.password_hash):
+    if not user or user.role != "family" or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Email atau kata sandi tidak valid.")
+    _set_session_cookie(response, create_session(db, user))
+    return _user_output(db, user)
+
+
+@router.post("/admin/login", response_model=UserOutput)
+def admin_login(
+    payload: LoginInput,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UserOutput:
+    require_trusted_origin(request)
+    normalized_email = normalize_email(str(payload.email))
+    ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(db, scope="admin_login_ip", subject=ip, limit=10, window_seconds=900)
+    enforce_rate_limit(db, scope="admin_login_email", subject=normalized_email, limit=5, window_seconds=900)
+    user = db.scalar(select(User).where(User.email == normalized_email))
+    if not user or user.role != "admin" or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Email atau kata sandi tidak valid.")
     _set_session_cookie(response, create_session(db, user))
     return _user_output(db, user)

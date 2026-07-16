@@ -23,6 +23,7 @@ describe("OnboardingWizard", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Masukkan nama panggilan");
 
     fireEvent.change(screen.getByLabelText("Nama panggilan"), { target: { value: "Adit" } });
+    fireEvent.change(screen.getByLabelText("Hubungan Anda"), { target: { value: "parent" } });
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     expect(screen.getByText("Kebutuhan dukungan")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Komunikasi"));
@@ -41,6 +42,7 @@ describe("OnboardingWizard", () => {
     render(<OnboardingWizard />);
     fireEvent.change(screen.getByLabelText("Nama panggilan"), { target: { value: " <b>Adit</b>\u0000 " } });
     fireEvent.change(screen.getByLabelText(/Tahun lahir/), { target: { value: "20ab20" } });
+    fireEvent.change(screen.getByLabelText("Hubungan Anda"), { target: { value: "parent" } });
     expect(screen.getByLabelText(/Tahun lahir/)).toHaveValue("2020");
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     fireEvent.click(screen.getByLabelText("Komunikasi"));
@@ -53,6 +55,7 @@ describe("OnboardingWizard", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Lanjut" }));
     fireEvent.click(screen.getByLabelText(/Saya berwenang/));
+    await waitFor(() => expect(sessionStorage.getItem("rangkul:onboarding-draft")).not.toContain("consent"));
     fireEvent.click(screen.getByRole("button", { name: "Selesaikan profil" }));
 
     await waitFor(() => expect(api).toHaveBeenCalledTimes(1));
@@ -65,7 +68,9 @@ describe("OnboardingWizard", () => {
       accessibility_preferences: ["reduced_noise"],
       primary_language: "id",
       notes: "Catatan aman",
+      caregiver_relationship: "parent",
     });
     expect(request.headers["Idempotency-Key"]).toEqual(expect.any(String));
+    expect(sessionStorage.getItem("rangkul:onboarding-draft")).toBeNull();
   });
 });

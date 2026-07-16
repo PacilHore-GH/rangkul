@@ -92,4 +92,29 @@ export type Person = {
   accessibility_preferences: string[];
   primary_language: string;
   notes: string | null;
+  caregiver_relationship: string;
+  completeness: {
+    percentage: number;
+    sections: Array<{ code: string; completed: boolean }>;
+  };
+};
+
+export type Facility = {
+  id: string;
+  name: string;
+  facility_type: string;
+  description: string | null;
+  services: string[];
+  address: string;
+  city: string;
+  province: string;
+  latitude: number | null;
+  longitude: number | null;
+  phone: string | null;
+  website: string | null;
+  source_name: string;
+  source_url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 };

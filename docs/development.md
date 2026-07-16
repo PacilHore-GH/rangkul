@@ -48,3 +48,23 @@ npm run test:e2e
 Playwright menjalankan database SQLite disposable dan server backend/frontend khusus
 test. Suite ini dijalankan di CI, bukan pre-commit, karena membutuhkan browser dan
 waktu startup lebih panjang.
+
+## Seed akun Admin demo
+
+Admin dibuat secara eksplisit dan idempotent; tidak ada password Admin di repository.
+
+```powershell
+cd backend
+$env:ADMIN_EMAIL="admin@rangkul.id"
+$env:ADMIN_PASSWORD="<password-kuat>"
+$env:ADMIN_FULL_NAME="Admin Rangkul"
+.\env\Scripts\python.exe -m app.scripts.seed_admin
+```
+
+Untuk backend Docker yang sedang berjalan:
+
+```powershell
+docker compose exec -e ADMIN_EMAIL=admin@rangkul.id -e ADMIN_PASSWORD="<password-kuat>" -e ADMIN_FULL_NAME="Admin Rangkul" backend python -m app.scripts.seed_admin
+```
+
+Masuk melalui `http://localhost:3000/admin/login`. Admin hanya dapat mengelola data eksternal di `/admin`; akses Person Profile keluarga selalu ditolak.

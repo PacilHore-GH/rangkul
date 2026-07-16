@@ -31,3 +31,12 @@ export const languageOptions = [
   ["jv", "Basa Jawa"],
   ["su", "Basa Sunda"],
 ] as const;
+
+export const relationshipOptions = [
+  ["parent", "Orang tua"],
+  ["guardian", "Wali"],
+  ["sibling", "Saudara"],
+  ["extended_family", "Keluarga lain"],
+  ["caregiver", "Pengasuh"],
+  ["other", "Lainnya"],
+] as const;

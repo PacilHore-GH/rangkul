@@ -22,6 +22,16 @@ const person = {
   accessibility_preferences: ["reduced_noise"],
   primary_language: "id",
   notes: "Suka rutinitas.",
+  caregiver_relationship: "parent",
+  completeness: {
+    percentage: 100,
+    sections: [
+      { code: "basic", completed: true },
+      { code: "support_needs", completed: true },
+      { code: "preferences", completed: true },
+      { code: "notes", completed: true },
+    ],
+  },
 };
 
 describe("PersonProfileManager", () => {
@@ -65,6 +75,7 @@ describe("PersonProfileManager", () => {
     expect(await screen.findByText("Adit")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Tambah orang yang didampingi" }));
     fireEvent.change(screen.getByLabelText("Nama panggilan"), { target: { value: "Naya" } });
+    fireEvent.change(screen.getByLabelText("Hubungan Anda"), { target: { value: "guardian" } });
     fireEvent.click(screen.getByLabelText("Komunikasi"));
     fireEvent.click(screen.getByLabelText(/Saya berwenang/));
     fireEvent.click(screen.getByRole("button", { name: "Simpan profil" }));

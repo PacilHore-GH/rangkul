@@ -20,6 +20,10 @@ test("family auth, onboarding, multi-profile CRUD, and logout session", async ({
 
   await page.getByLabel("Nama panggilan").fill("Adit");
   await page.getByLabel(/Tahun lahir/).fill("2020");
+  await page.getByLabel("Hubungan Anda").selectOption("parent");
+  await page.reload();
+  await expect(page.getByText("Draft onboarding dipulihkan.")).toBeVisible();
+  await expect(page.getByLabel("Nama panggilan")).toHaveValue("Adit");
   await page.getByRole("button", { name: "Lanjut" }).click();
   await page.getByLabel("Komunikasi", { exact: true }).check();
   await page.getByRole("button", { name: "Lanjut" }).click();
@@ -32,11 +36,13 @@ test("family auth, onboarding, multi-profile CRUD, and logout session", async ({
   await page.getByRole("button", { name: "Selesaikan profil" }).click();
 
   await expect(page).toHaveURL(/\/app\/dashboard/);
-  await expect(page.getByText("Adit")).toBeVisible();
-  await page.getByRole("link", { name: "Kelola dan tambah profil" }).click();
+  await expect(page.getByRole("heading", { name: "Adit" })).toBeVisible();
+  await expect(page.getByText("Kelengkapan profil")).toBeVisible();
+  await page.getByRole("link", { name: "Tambah atau kelola profil" }).click();
 
   await page.getByRole("button", { name: "Tambah orang yang didampingi" }).click();
   await page.getByLabel("Nama panggilan").fill("Naya");
+  await page.getByLabel("Hubungan Anda").selectOption("guardian");
   await page.getByLabel("Belajar").check();
   await page.getByLabel("Instruksi singkat").check();
   await page.getByLabel(/Saya berwenang/).check();
@@ -58,4 +64,34 @@ test("family auth, onboarding, multi-profile CRUD, and logout session", async ({
   await expect(page).toHaveURL(/\/login/);
   await page.goto("/app/dashboard");
   await expect(page).toHaveURL(/\/login/);
+});
+
+test("admin login and facility external-data CRUD", async ({ page }) => {
+  await page.goto("/admin/login");
+  await page.getByLabel("Email Admin").fill("admin@rangkul.id");
+  await page.getByRole("textbox", { name: "Kata sandi Admin" }).fill("Password-Admin12!");
+  await page.getByRole("button", { name: "Masuk sebagai Admin" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+
+  await page.getByLabel("Nama", { exact: true }).fill("RS Demo Rangkul");
+  await page.getByRole("textbox", { name: "Layanan, pisahkan dengan koma" }).fill("Terapi okupasi, Psikologi");
+  await page.getByLabel("Alamat").fill("Jl. Demo No. 1");
+  await page.getByLabel("Kota").fill("Bandung");
+  await page.getByLabel("Provinsi").fill("Jawa Barat");
+  await page.getByLabel("Nama sumber").fill("Data Demo");
+  await page.getByLabel("URL sumber").fill("https://example.com/source");
+  await page.getByRole("button", { name: "Simpan fasilitas" }).click();
+
+  const facility = page.locator("article", { hasText: "RS Demo Rangkul" });
+  await expect(facility).toBeVisible();
+  await facility.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel(/Tampilkan kepada keluarga/).uncheck();
+  await page.getByRole("button", { name: "Simpan fasilitas" }).click();
+  await expect(page.locator("article", { hasText: "RS Demo Rangkul" })).toContainText("Nonaktif");
+
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.locator("article", { hasText: "RS Demo Rangkul" }).getByRole("button", { name: "Hapus" }).click();
+  await expect(page.locator("article", { hasText: "RS Demo Rangkul" })).not.toBeVisible();
+  await page.getByRole("button", { name: "Keluar" }).click();
+  await expect(page).toHaveURL(/\/admin\/login/);
 });

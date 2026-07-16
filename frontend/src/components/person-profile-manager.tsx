@@ -7,6 +7,7 @@ import {
   accessibilityOptions,
   communicationOptions,
   languageOptions,
+  relationshipOptions,
   supportNeedOptions,
 } from "@/lib/person-options";
 import { sanitizeMultiline, sanitizeSingleLine } from "@/lib/validation";
@@ -26,6 +27,7 @@ export function PersonProfileManager() {
   const [accessibility, setAccessibility] = useState<string[]>([]);
   const [primaryLanguage, setPrimaryLanguage] = useState("id");
   const [notes, setNotes] = useState("");
+  const [relationship, setRelationship] = useState("");
   const [consent, setConsent] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(createIdempotencyKey);
 
@@ -50,6 +52,7 @@ export function PersonProfileManager() {
     setAccessibility([]);
     setPrimaryLanguage("id");
     setNotes("");
+    setRelationship("");
     setConsent(false);
     setIdempotencyKey(createIdempotencyKey());
     setError("");
@@ -69,6 +72,7 @@ export function PersonProfileManager() {
     setAccessibility(person.accessibility_preferences);
     setPrimaryLanguage(person.primary_language);
     setNotes(person.notes ?? "");
+    setRelationship(person.caregiver_relationship);
     setError("");
     setMode("edit");
   }
@@ -98,6 +102,7 @@ export function PersonProfileManager() {
       return setError("Masukkan tahun lahir antara 1900 dan 2026.");
     }
     if (supportNeeds.length === 0) return setError("Pilih minimal satu kebutuhan dukungan.");
+    if (!relationship) return setError("Pilih hubungan Anda dengan orang yang didampingi.");
     if (mode === "create" && !consent) {
       return setError("Centang pernyataan kewenangan untuk menyimpan profil.");
     }
@@ -112,6 +117,7 @@ export function PersonProfileManager() {
         accessibility_preferences: accessibility,
         primary_language: primaryLanguage,
         notes: notes ? sanitizeMultiline(notes, 1000) : null,
+        caregiver_relationship: relationship,
         ...(mode === "create" ? { consent } : {}),
       };
       const saved = await api<Person>(mode === "create" ? "/people" : `/people/${selected!.id}`, {
@@ -171,6 +177,7 @@ export function PersonProfileManager() {
                 {person.support_needs.map((code) => supportNeedOptions.find(([value]) => value === code)?.[1] ?? code).join(", ")}
               </p>
               {person.notes && <p>{person.notes}</p>}
+              <p className="hint">Kelengkapan profil: {person.completeness.percentage}%</p>
             </div>
             <div className="button-row">
               <button className="secondary compact" onClick={() => startEdit(person)}>Edit profil</button>
@@ -189,6 +196,10 @@ export function PersonProfileManager() {
     <form className="form-stack" onSubmit={save} noValidate>
       <label>Nama panggilan<input className="field" value={displayName} onChange={(event) => setDisplayName(event.target.value)} maxLength={100} /></label>
       <label>Tahun lahir <span className="muted">(opsional)</span><input className="field" inputMode="numeric" value={birthYear} onChange={(event) => setBirthYear(event.target.value.replace(/\D/g, "").slice(0, 4))} /></label>
+      <label>Hubungan Anda<select className="field" value={relationship} onChange={(event) => setRelationship(event.target.value)}>
+        <option value="">Pilih hubungan</option>
+        {relationshipOptions.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+      </select></label>
       <fieldset className="profile-fieldset"><legend>Kebutuhan dukungan</legend><div className="needs">
         {supportNeedOptions.map(([code, label]) => <label key={code} className={`need ${supportNeeds.includes(code) ? "chosen" : ""}`}><input type="checkbox" checked={supportNeeds.includes(code)} onChange={() => toggleNeed(code)} />{label}</label>)}
       </div></fieldset>

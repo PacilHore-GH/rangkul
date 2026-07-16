@@ -14,4 +14,8 @@ Input mutation memakai schema strict dan menolak field asing seperti `role`, `ow
 
 Endpoint auth publik memakai rate limit berbasis PostgreSQL. Mutation berbasis cookie memvalidasi `Origin`/`Referer` terhadap `TRUSTED_ORIGINS`. Create onboarding dan Person Profile wajib membawa header UUID `Idempotency-Key`; retry key dan payload yang sama mengembalikan hasil pertama, sedangkan payload berbeda menghasilkan `409`.
 
-Onboarding memiliki lima tahap: data dasar, kebutuhan dukungan, preferensi komunikasi/aksesibilitas, catatan, serta review dan consent. Preferensi disimpan sebagai katalog JSON tervalidasi dan tetap dapat diedit dari pengelolaan profil.
+Onboarding memiliki lima tahap: data dasar dan hubungan caregiver, kebutuhan dukungan, preferensi komunikasi/aksesibilitas, catatan, serta review dan consent. Draft disimpan sementara di `sessionStorage` dan consent tidak pernah disimpan sebagai draft. Preferensi disimpan sebagai katalog JSON tervalidasi dan tetap dapat diedit dari pengelolaan profil.
+
+Dashboard menyediakan Active Person Switcher. Pilihan disimpan per user di browser dan diekspos melalui `ActivePersonProvider`, sehingga Journal, Roadmap, AI, Aid, dan Facility dapat memakai profil aktif yang sama. Kelengkapan profil dihitung backend melalui policy section yang extensible; nilainya bukan asesmen atau diagnosis.
+
+Role Admin tidak tersedia melalui registrasi publik. Admin login melalui `/admin/login`, melewati onboarding, dan ditolak oleh semua endpoint People.

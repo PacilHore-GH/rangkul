@@ -6,10 +6,11 @@ Rangkul menggunakan **modular monolith**: satu deployment dan satu database untu
 
 - `app/modules/identity`: akun Family, credential, session, dan password reset.
 - `app/modules/people`: Person Profile, consent, dan kebutuhan dukungan.
+- `app/modules/facilities`: katalog fasilitas eksternal dengan CRUD khusus Admin.
 - `app/core`: konfigurasi lintas-modul.
 - `app/db.py`: engine dan dependency database bersama.
 
-Route publik hanya melakukan komposisi di `app/api/router.py`. Modul tidak boleh mengimpor router modul lain; integrasi lintas-modul melalui service/port kecil. Saat Journal, Roadmap, AI, Facility, dan Aid dibuat, masing-masing harus mengikuti struktur `app/modules/<feature>/{router,service,schemas,repository}.py`.
+Route publik hanya melakukan komposisi di `app/api/router.py`. Modul tidak boleh mengimpor router modul lain; integrasi lintas-modul melalui service/port kecil. Journal, Roadmap, AI, dan Aid mengikuti struktur `app/modules/<feature>/{router,service,schemas,repository}.py`. Authorization role, idempotency, active-person context, draft storage, dan completeness policy tersedia sebagai extension point sehingga modul baru tidak perlu mengubah modul yang sudah ada.
 
 Frontend mengikuti batas yang sama: route App Router tetap tipis dan UI/domain logic baru ditempatkan pada `src/features/<feature>`. `src/lib` hanya untuk infrastruktur lintas-fitur seperti HTTP client.
 

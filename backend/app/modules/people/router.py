@@ -2,22 +2,27 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.authorization import require_role
 from app.core.schemas import StrictInputModel
 from app.core.security import require_trusted_origin
 from app.core.text import sanitize_multiline
 from app.db import get_db
 from app.models import PersonProfile, User, utcnow
 from app.modules.identity.router import clean_name
-from app.modules.identity.service import get_current_user
 from app.modules.people.idempotency import find_record, request_hash, store_record, validate_idempotency_key
+from app.modules.people.policies import RELATIONSHIP_CODES, completeness_for
+from app.modules.people.repository import (
+    create_primary_relationship,
+    primary_relationship,
+    update_primary_relationship,
+)
 
 router = APIRouter()
 SUPPORT_NEED_CODES = {"communication", "learning", "mobility", "sensory", "daily_living", "social_emotional"}
@@ -56,6 +61,7 @@ class PersonCreateInput(StrictInputModel):
     accessibility_preferences: list[str] = Field(default_factory=list, max_length=10)
     primary_language: str = "id"
     notes: str | None = Field(default=None, max_length=1000)
+    caregiver_relationship: str
     consent: bool
 
     @field_validator("display_name")
@@ -90,6 +96,13 @@ class PersonCreateInput(StrictInputModel):
     def trim_notes(cls, value: str | None) -> str | None:
         return normalize_notes(value)
 
+    @field_validator("caregiver_relationship")
+    @classmethod
+    def validate_relationship(cls, value: str) -> str:
+        if value not in RELATIONSHIP_CODES or value == "unspecified":
+            raise ValueError("Hubungan caregiver tidak valid.")
+        return value
+
     @field_validator("consent")
     @classmethod
     def require_consent(cls, value: bool) -> bool:
@@ -106,6 +119,7 @@ class PersonUpdateInput(StrictInputModel):
     accessibility_preferences: list[str] | None = Field(default=None, max_length=10)
     primary_language: str | None = None
     notes: str | None = Field(default=None, max_length=1000)
+    caregiver_relationship: str | None = None
 
     @field_validator("display_name")
     @classmethod
@@ -147,6 +161,23 @@ class PersonUpdateInput(StrictInputModel):
     def trim_notes(cls, value: str | None) -> str | None:
         return normalize_notes(value)
 
+    @field_validator("caregiver_relationship")
+    @classmethod
+    def validate_relationship(cls, value: str | None) -> str | None:
+        if value is None or value not in RELATIONSHIP_CODES or value == "unspecified":
+            raise ValueError("Hubungan caregiver tidak valid.")
+        return value
+
+
+class CompletenessSection(BaseModel):
+    code: str
+    completed: bool
+
+
+class CompletenessOutput(BaseModel):
+    percentage: int
+    sections: list[CompletenessSection]
+
 
 class PersonOutput(BaseModel):
     id: str
@@ -157,14 +188,29 @@ class PersonOutput(BaseModel):
     accessibility_preferences: list[str]
     primary_language: str
     notes: str | None
+    caregiver_relationship: str
+    completeness: CompletenessOutput
     model_config = {"from_attributes": True}
 
 
-def current_user(
-    db: Session = Depends(get_db),
-    session_token: Annotated[str | None, Cookie(alias=settings.SESSION_COOKIE_NAME)] = None,
-) -> User:
-    return get_current_user(db, session_token)
+family_user = require_role("family")
+
+
+def person_output(db: Session, person: PersonProfile, user: User) -> dict:
+    relationship = primary_relationship(db, person.id, user.id)
+    relationship_type = relationship.relationship_type if relationship else "unspecified"
+    return {
+        "id": person.id,
+        "display_name": person.display_name,
+        "birth_year": person.birth_year,
+        "support_needs": person.support_needs,
+        "communication_preferences": person.communication_preferences,
+        "accessibility_preferences": person.accessibility_preferences,
+        "primary_language": person.primary_language,
+        "notes": person.notes,
+        "caregiver_relationship": relationship_type,
+        "completeness": completeness_for(person, relationship_type),
+    }
 
 
 def owned_person_or_404(db: Session, user: User, person_id: str) -> PersonProfile:
@@ -217,7 +263,7 @@ def complete_onboarding(
     payload: PersonCreateInput,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(current_user),
+    user: User = Depends(family_user),
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
 ) -> PersonProfile | JSONResponse:
     require_trusted_origin(request)
@@ -234,7 +280,9 @@ def complete_onboarding(
     user.onboarding_completed_at = utcnow()
     db.add(person)
     db.flush()
-    body = PersonOutput.model_validate(person).model_dump(mode="json")
+    create_primary_relationship(db, person.id, user.id, payload.caregiver_relationship)
+    db.flush()
+    body = person_output(db, person, user)
     store_record(db, user_id=user.id, operation="people_onboarding", key=key,
                  payload_hash=payload_hash, status_code=201, response_body=body)
     replay = commit_idempotent_create(
@@ -247,7 +295,7 @@ def complete_onboarding(
     if replay:
         return replay
     db.refresh(person)
-    return person
+    return body
 
 
 @router.post("", response_model=PersonOutput, status_code=status.HTTP_201_CREATED)
@@ -255,7 +303,7 @@ def create_person(
     payload: PersonCreateInput,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(current_user),
+    user: User = Depends(family_user),
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
 ) -> PersonProfile | JSONResponse:
     require_trusted_origin(request)
@@ -271,7 +319,9 @@ def create_person(
     person = build_person(payload, user)
     db.add(person)
     db.flush()
-    body = PersonOutput.model_validate(person).model_dump(mode="json")
+    create_primary_relationship(db, person.id, user.id, payload.caregiver_relationship)
+    db.flush()
+    body = person_output(db, person, user)
     store_record(db, user_id=user.id, operation="people_create", key=key,
                  payload_hash=payload_hash, status_code=201, response_body=body)
     replay = commit_idempotent_create(
@@ -284,11 +334,11 @@ def create_person(
     if replay:
         return replay
     db.refresh(person)
-    return person
+    return body
 
 
 @router.get("/me", response_model=PersonOutput)
-def get_my_person(db: Session = Depends(get_db), user: User = Depends(current_user)) -> PersonProfile:
+def get_my_person(db: Session = Depends(get_db), user: User = Depends(family_user)) -> dict:
     person = db.scalar(
         select(PersonProfile)
         .where(PersonProfile.owner_user_id == user.id)
@@ -296,21 +346,22 @@ def get_my_person(db: Session = Depends(get_db), user: User = Depends(current_us
     )
     if not person:
         raise HTTPException(status_code=404, detail="Profil belum dibuat.")
-    return person
+    return person_output(db, person, user)
 
 
 @router.get("", response_model=list[PersonOutput])
-def list_my_people(db: Session = Depends(get_db), user: User = Depends(current_user)) -> list[PersonProfile]:
-    return list(db.scalars(
+def list_my_people(db: Session = Depends(get_db), user: User = Depends(family_user)) -> list[dict]:
+    people = list(db.scalars(
         select(PersonProfile)
         .where(PersonProfile.owner_user_id == user.id)
         .order_by(PersonProfile.created_at, PersonProfile.id)
     ))
+    return [person_output(db, person, user) for person in people]
 
 
 @router.get("/{person_id}", response_model=PersonOutput)
-def get_person(person_id: str, db: Session = Depends(get_db), user: User = Depends(current_user)) -> PersonProfile:
-    return owned_person_or_404(db, user, person_id)
+def get_person(person_id: str, db: Session = Depends(get_db), user: User = Depends(family_user)) -> dict:
+    return person_output(db, owned_person_or_404(db, user, person_id), user)
 
 
 @router.patch("/{person_id}", response_model=PersonOutput)
@@ -319,16 +370,23 @@ def update_person(
     payload: PersonUpdateInput,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(current_user),
-) -> PersonProfile:
+    user: User = Depends(family_user),
+) -> dict:
     require_trusted_origin(request)
     person = owned_person_or_404(db, user, person_id)
     updates = payload.model_dump(exclude_unset=True)
+    relationship_type = updates.pop("caregiver_relationship", None)
     for field, value in updates.items():
         setattr(person, field, value)
+    if relationship_type:
+        relationship = primary_relationship(db, person.id, user.id)
+        if relationship:
+            update_primary_relationship(relationship, relationship_type)
+        else:
+            create_primary_relationship(db, person.id, user.id, relationship_type)
     db.commit()
     db.refresh(person)
-    return person
+    return person_output(db, person, user)
 
 
 @router.delete("/{person_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -336,7 +394,7 @@ def delete_person(
     person_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(current_user),
+    user: User = Depends(family_user),
 ) -> None:
     require_trusted_origin(request)
     person = owned_person_or_404(db, user, person_id)

@@ -24,6 +24,7 @@ PERSON = {
     "accessibility_preferences": ["reduced_noise"],
     "primary_language": "id",
     "notes": None,
+    "caregiver_relationship": "parent",
     "consent": True,
 }
 
