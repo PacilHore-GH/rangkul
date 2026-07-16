@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 router = APIRouter()
 
@@ -21,13 +21,19 @@ Accessibility = Literal[
 
 
 class FacilityService(BaseModel):
-    code: str
-    name: str
-    age_min: int = 0
-    age_max: int | None = None
+    code: str = Field(min_length=2, max_length=100, pattern=r"^[a-z0-9_]+$")
+    name: str = Field(min_length=2, max_length=200)
+    age_min: int = Field(default=0, ge=0, le=120)
+    age_max: int | None = Field(default=None, ge=0, le=120)
     accepts_bpjs: bool = False
     online_booking: bool = False
     accessibility: list[Accessibility] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_age_range(self) -> "FacilityService":
+        if self.age_max is not None and self.age_max < self.age_min:
+            raise ValueError("Usia maksimum tidak boleh lebih kecil dari usia minimum.")
+        return self
 
 
 class Facility(BaseModel):
@@ -79,8 +85,10 @@ class FacilityReport(BaseModel):
     facility_id: str
     reason: Literal["wrong_information", "closed", "contact", "service", "other"]
     details: str
-    status: Literal["received"] = "received"
+    status: Literal["received", "reviewing", "resolved", "dismissed"] = "received"
     created_at: datetime
+    updated_at: datetime | None = None
+    resolution_note: str | None = None
 
 
 # ponytail: demo catalog until the shared PostgreSQL foundation lands; replace
