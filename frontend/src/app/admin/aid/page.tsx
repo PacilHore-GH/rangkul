@@ -8,14 +8,23 @@ import {
   createAidProgram,
 } from "@/lib/api";
 
-const CATEGORY_COLORS: Record<string, string> = {
-  kesehatan: "bg-emerald-900/50 text-emerald-300 border-emerald-800",
-  pendidikan: "bg-blue-900/50 text-blue-300 border-blue-800",
-  sosial: "bg-purple-900/50 text-purple-300 border-purple-800",
-  ekonomi: "bg-amber-900/50 text-amber-300 border-amber-800",
-  infrastruktur: "bg-orange-900/50 text-orange-300 border-orange-800",
-  pertanian: "bg-lime-900/50 text-lime-300 border-lime-800",
-};
+// ponytail: map backend enum values to colors and Indonesian labels
+const CATEGORIES = [
+  { value: "disability_support", label: "Disabilitas", colors: "bg-purple-900/50 text-purple-300 border-purple-800" },
+  { value: "health", label: "Kesehatan", colors: "bg-emerald-900/50 text-emerald-300 border-emerald-800" },
+  { value: "education", label: "Pendidikan", colors: "bg-blue-900/50 text-blue-300 border-blue-800" },
+  { value: "financial", label: "Keuangan", colors: "bg-amber-900/50 text-amber-300 border-amber-800" },
+  { value: "housing", label: "Perumahan", colors: "bg-orange-900/50 text-orange-300 border-orange-800" },
+  { value: "other", label: "Lainnya", colors: "bg-zinc-800 text-zinc-300 border-zinc-700" },
+];
+
+const CATEGORY_COLORS: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.value, c.colors])
+);
+
+const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.value, c.label])
+);
 
 function categoryBadgeClass(category: string) {
   return (
@@ -43,6 +52,7 @@ const INITIAL_FORM = {
   description: "",
   provider: "",
   category: "",
+  jurisdiction: "",
   is_active: true,
 };
 
@@ -149,13 +159,20 @@ export default function AidProgramsPage() {
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
               >
                 <option value="">Pilih kategori…</option>
-                <option value="kesehatan">Kesehatan</option>
-                <option value="pendidikan">Pendidikan</option>
-                <option value="sosial">Sosial</option>
-                <option value="ekonomi">Ekonomi</option>
-                <option value="infrastruktur">Infrastruktur</option>
-                <option value="pertanian">Pertanian</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
               </select>
+            </label>
+            <label className="block">
+              <span className="text-xs text-zinc-400 mb-1 block">Wilayah</span>
+              <input
+                required
+                value={form.jurisdiction}
+                onChange={(e) => setForm({ ...form, jurisdiction: e.target.value })}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                placeholder="Contoh: Nasional / DKI Jakarta"
+              />
             </label>
             <label className="block">
               <span className="text-xs text-zinc-400 mb-1 block">Status</span>
@@ -254,7 +271,7 @@ export default function AidProgramsPage() {
                     p.category
                   )}`}
                 >
-                  {p.category}
+                  {CATEGORY_LABELS[p.category] || p.category}
                 </span>
 
                 <span
