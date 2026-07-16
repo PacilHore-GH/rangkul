@@ -49,3 +49,10 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
+.agents
+.codex
+
+.vercel
+.env*
+# Local SQLite databases
+*.db
