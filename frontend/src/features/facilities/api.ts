@@ -106,10 +106,13 @@ export function toggleSavedFacility(id: string): string[] {
   return saved;
 }
 
-export function osmEmbedUrl(facility: Facility): string {
-  const { latitude: lat, longitude: lng } = facility;
+export function osmCoordinatesEmbedUrl(lat: number, lng: number): string {
   const bbox = `${lng - 0.02},${lat - 0.02},${lng + 0.02},${lat + 0.02}`;
   return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${lat},${lng}`;
+}
+
+export function osmEmbedUrl(facility: Facility): string {
+  return osmCoordinatesEmbedUrl(facility.latitude, facility.longitude);
 }
 
 export function googleMapsDirectionsUrl(facility: Facility): string {

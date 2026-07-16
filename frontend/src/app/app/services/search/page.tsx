@@ -7,6 +7,7 @@ import {
   categoryLabels,
   getSavedFacilityIds,
   googleMapsDirectionsUrl,
+  osmCoordinatesEmbedUrl,
   osmEmbedUrl,
   searchFacilities,
   toggleSavedFacility,
@@ -60,7 +61,6 @@ export default function FacilitySearchPage() {
       const result = await searchFacilities(buildParams(cursor, location));
       setItems((current) => (append ? [...current, ...result.items] : result.items));
       setNextCursor(result.next_cursor);
-      if (!append) setMapFacility(result.items[0] || null);
     } catch (requestError) {
       setError(requestError instanceof Error && requestError.message === "SERVER_ERROR" ? "server" : "network");
     } finally {
@@ -93,6 +93,7 @@ export default function FacilitySearchPage() {
       ({ coords }) => {
         const location = { latitude: coords.latitude, longitude: coords.longitude };
         setCoordinates(location);
+        setMapFacility(null);
         setLocationMessage("Hasil diurutkan dari lokasi Anda (maksimal 100 km). ");
         void load(undefined, false, location);
       },
@@ -196,7 +197,7 @@ export default function FacilitySearchPage() {
               {loading ? "Mencari…" : "Cari"}
             </button>
             <button type="button" onClick={useCurrentLocation} className="min-h-11 rounded-lg border border-slate-700 px-3 hover:bg-slate-800">
-              Lokasi saya
+              Di sekitar saya
             </button>
           </div>
         </div>
@@ -228,13 +229,31 @@ export default function FacilitySearchPage() {
         </div>
       )}
 
-      {mapFacility && (
+      {!mapFacility && !coordinates && (
+        <section aria-labelledby="map-title" className="mb-8 rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
+          <h2 id="map-title" className="font-semibold">Peta lokasi</h2>
+          <p className="mt-2 text-sm text-slate-400">Pilih “Di sekitar saya” untuk menampilkan posisi Anda dan fasilitas dalam radius 100 km.</p>
+        </section>
+      )}
+
+      {(mapFacility || coordinates) && (
         <section aria-labelledby="map-title" className="mb-8 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-          <div className="p-4">
-            <h2 id="map-title" className="font-semibold">Peta: {mapFacility.name}</h2>
-            <p className="mt-1 text-sm text-slate-400">Daftar di bawah tetap dapat digunakan jika peta gagal dimuat.</p>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              <h2 id="map-title" className="font-semibold">{mapFacility ? `Peta: ${mapFacility.name}` : "Lokasi Anda"}</h2>
+              <p className="mt-1 text-sm text-slate-400">Daftar di bawah tetap dapat digunakan jika peta gagal dimuat.</p>
+            </div>
+            {mapFacility && coordinates && (
+              <button onClick={() => setMapFacility(null)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">Kembali ke lokasi saya</button>
+            )}
           </div>
-          <iframe title={`Peta ${mapFacility.name}`} src={osmEmbedUrl(mapFacility)} className="h-72 w-full border-0" loading="lazy" referrerPolicy="no-referrer" />
+          <iframe
+            title={mapFacility ? `Peta ${mapFacility.name}` : "Peta lokasi Anda"}
+            src={mapFacility ? osmEmbedUrl(mapFacility) : osmCoordinatesEmbedUrl(coordinates!.latitude, coordinates!.longitude)}
+            className="h-72 w-full border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
         </section>
       )}
 
