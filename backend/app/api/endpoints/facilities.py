@@ -48,6 +48,7 @@ class Facility(BaseModel):
     source_updated_at: date
     valid_until: date
     services: list[FacilityService]
+    active: bool = True
     stale: bool = False
     distance_km: float | None = None
 
@@ -273,6 +274,8 @@ def search_facilities(
     results: list[Facility] = []
 
     for stored in FACILITIES:
+        if not stored.active:
+            continue
         facility = stored.model_copy(deep=True)
         facility.stale = facility.valid_until < date.today()
         searchable = " ".join(
@@ -321,7 +324,7 @@ def search_facilities(
 
 @router.post("/compare", response_model=list[Facility])
 def compare_facilities(payload: FacilityCompare) -> list[Facility]:
-    facilities_by_id = {item.id: item for item in FACILITIES}
+    facilities_by_id = {item.id: item for item in FACILITIES if item.active}
     missing = [item_id for item_id in payload.facility_ids if item_id not in facilities_by_id]
     if missing:
         raise HTTPException(status_code=404, detail="Satu atau beberapa fasilitas tidak ditemukan.")
@@ -350,7 +353,10 @@ def report_facility(facility_id: str, payload: FacilityReportCreate) -> Facility
 
 @router.get("/{facility_id}", response_model=Facility)
 def get_facility(facility_id: str) -> Facility:
-    facility = next((item.model_copy(deep=True) for item in FACILITIES if item.id == facility_id), None)
+    facility = next(
+        (item.model_copy(deep=True) for item in FACILITIES if item.id == facility_id and item.active),
+        None,
+    )
     if not facility:
         raise HTTPException(status_code=404, detail="Fasilitas tidak ditemukan.")
     facility.stale = facility.valid_until < date.today()

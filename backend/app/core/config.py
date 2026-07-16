@@ -7,6 +7,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "Rangkul Backend API"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
+    # Temporary bridge until the team's role-based auth branch is merged.
+    FACILITY_ADMIN_TOKEN: Optional[str] = None
     
     # CORS Origins can be a JSON string like '["http://localhost:3000"]' or a comma-separated list
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
