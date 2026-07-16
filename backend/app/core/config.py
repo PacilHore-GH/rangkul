@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     SESSION_EXPIRE_HOURS: int = 8
     RESET_TOKEN_EXPIRE_MINUTES: int = 15
+    FRONTEND_URL: str = "http://localhost:3000"
+    MAILER_BACKEND: Literal["console", "fake"] = "console"
+    TRUSTED_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CSRF_ENABLED: bool = True
     
     # CORS Origins can be a JSON string like '["http://localhost:3000"]' or a comma-separated list
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -31,6 +35,11 @@ class Settings(BaseSettings):
                     pass
             return [i.strip() for i in v.split(",") if i.strip()]
         return v
+
+    @field_validator("TRUSTED_ORIGINS", mode="before")
+    @classmethod
+    def assemble_trusted_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        return cls.assemble_cors_origins(v)
 
     model_config = SettingsConfigDict(
         env_file=".env", 

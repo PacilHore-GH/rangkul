@@ -43,4 +43,25 @@ describe("API error messages", () => {
       expect.objectContaining({ credentials: "include" }),
     );
   });
+
+  it("preserves JSON content type when a mutation adds an idempotency header", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api("/people", {
+      method: "POST",
+      headers: { "Idempotency-Key": "11111111-1111-4111-8111-111111111111" },
+      body: JSON.stringify({ display_name: "Adit" }),
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/people", expect.objectContaining({
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": "11111111-1111-4111-8111-111111111111",
+      },
+    }));
+  });
 });

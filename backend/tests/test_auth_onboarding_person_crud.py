@@ -1,4 +1,7 @@
+from uuid import uuid4
+
 from app.models import User
+import pytest
 
 
 REGISTER = {
@@ -12,6 +15,7 @@ PERSON = {
     "birth_year": 2020,
     "support_needs": ["communication", "sensory"],
     "notes": "Suka rutinitas.",
+    "caregiver_relationship": "parent",
     "consent": True,
 }
 
@@ -37,7 +41,11 @@ def test_onboarding_is_authenticated_and_can_only_be_completed_once(client):
     completed = http.post("/api/v1/people/onboarding", json=PERSON)
     assert completed.status_code == 201
     assert http.get("/api/v1/auth/me").json()["onboarding_completed"] is True
-    assert http.post("/api/v1/people/onboarding", json=PERSON).status_code == 409
+    assert http.post(
+        "/api/v1/people/onboarding",
+        json=PERSON,
+        headers={"Idempotency-Key": str(uuid4())},
+    ).status_code == 409
 
 
 def test_person_profile_owner_can_manage_multiple_people_without_reopening_onboarding(client):
@@ -62,7 +70,20 @@ def test_person_profile_owner_can_manage_multiple_people_without_reopening_onboa
         "display_name": "Adit Pratama",
         "birth_year": None,
         "support_needs": ["learning"],
+        "communication_preferences": [],
+        "accessibility_preferences": [],
+        "primary_language": "id",
         "notes": None,
+        "caregiver_relationship": "parent",
+        "completeness": {
+            "percentage": 50,
+            "sections": [
+                {"code": "basic", "completed": True},
+                {"code": "support_needs", "completed": True},
+                {"code": "preferences", "completed": False},
+                {"code": "notes", "completed": False},
+            ],
+        },
     }
 
     second = http.post("/api/v1/people", json={
@@ -83,7 +104,11 @@ def test_person_profile_owner_can_manage_multiple_people_without_reopening_onboa
     assert current_user["onboarding_completed"] is True
     assert current_user["has_profile"] is True
     assert [person["display_name"] for person in http.get("/api/v1/people").json()] == ["Naya"]
-    assert http.post("/api/v1/people/onboarding", json=PERSON).status_code == 409
+    assert http.post(
+        "/api/v1/people/onboarding",
+        json=PERSON,
+        headers={"Idempotency-Key": str(uuid4())},
+    ).status_code == 409
 
 
 def test_person_crud_requires_completed_onboarding_and_enforces_ownership(client):
@@ -160,3 +185,38 @@ def test_deleting_profile_does_not_clear_onboarding_marker(client):
     user = db.query(User).filter_by(email=REGISTER["email"]).one()
     assert user.onboarding_completed_at is not None
     db.close()
+
+
+@pytest.mark.parametrize("relationship", [
+    "parent", "guardian", "sibling", "extended_family", "caregiver", "other",
+])
+def test_person_accepts_every_supported_caregiver_relationship(client, relationship):
+    http, _ = client
+    http.post("/api/v1/auth/register", json={**REGISTER, "email": f"{relationship}@example.com"})
+    created = http.post("/api/v1/people/onboarding", json={
+        **PERSON,
+        "caregiver_relationship": relationship,
+    })
+    assert created.status_code == 201
+    assert created.json()["caregiver_relationship"] == relationship
+
+
+@pytest.mark.parametrize("relationship", [None, "", "unspecified", "professional", "PARENT"])
+def test_person_rejects_missing_or_invalid_caregiver_relationship(client, relationship):
+    http, _ = client
+    http.post("/api/v1/auth/register", json=REGISTER)
+    payload = {**PERSON}
+    if relationship is None:
+        payload.pop("caregiver_relationship")
+    else:
+        payload["caregiver_relationship"] = relationship
+    assert http.post("/api/v1/people/onboarding", json=payload).status_code == 422
+
+
+def test_owner_can_update_primary_caregiver_relationship(client):
+    http, _ = client
+    http.post("/api/v1/auth/register", json=REGISTER)
+    person_id = http.post("/api/v1/people/onboarding", json=PERSON).json()["id"]
+    updated = http.patch(f"/api/v1/people/{person_id}", json={"caregiver_relationship": "guardian"})
+    assert updated.status_code == 200
+    assert updated.json()["caregiver_relationship"] == "guardian"

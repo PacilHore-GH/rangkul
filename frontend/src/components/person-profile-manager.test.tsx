@@ -5,6 +5,7 @@ const { api, push } = vi.hoisted(() => ({ api: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: push, refresh: vi.fn() }) }));
 vi.mock("@/lib/api", () => ({
   api,
+  createIdempotencyKey: () => "11111111-1111-4111-8111-111111111111",
   ApiError: class ApiError extends Error {
     constructor(public status: number, message: string) { super(message); }
   },
@@ -17,7 +18,20 @@ const person = {
   display_name: "Adit",
   birth_year: 2020,
   support_needs: ["communication"],
+  communication_preferences: ["visual_support"],
+  accessibility_preferences: ["reduced_noise"],
+  primary_language: "id",
   notes: "Suka rutinitas.",
+  caregiver_relationship: "parent",
+  completeness: {
+    percentage: 100,
+    sections: [
+      { code: "basic", completed: true },
+      { code: "support_needs", completed: true },
+      { code: "preferences", completed: true },
+      { code: "notes", completed: true },
+    ],
+  },
 };
 
 describe("PersonProfileManager", () => {
@@ -61,12 +75,14 @@ describe("PersonProfileManager", () => {
     expect(await screen.findByText("Adit")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Tambah orang yang didampingi" }));
     fireEvent.change(screen.getByLabelText("Nama panggilan"), { target: { value: "Naya" } });
+    fireEvent.change(screen.getByLabelText("Hubungan Anda"), { target: { value: "guardian" } });
     fireEvent.click(screen.getByLabelText("Komunikasi"));
     fireEvent.click(screen.getByLabelText(/Saya berwenang/));
     fireEvent.click(screen.getByRole("button", { name: "Simpan profil" }));
 
     await waitFor(() => expect(api).toHaveBeenLastCalledWith("/people", expect.objectContaining({
       method: "POST",
+      headers: expect.objectContaining({ "Idempotency-Key": expect.any(String) }),
     })));
   });
 });

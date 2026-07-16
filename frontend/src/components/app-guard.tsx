@@ -11,7 +11,8 @@ export function AppGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     api<CurrentUser>("/auth/me")
       .then((user) => {
-        if (!user.onboarding_completed) router.replace("/app/onboarding");
+        if (user.role !== "family") router.replace("/admin");
+        else if (!user.onboarding_completed) router.replace("/app/onboarding");
         else setAllowed(true);
       })
       .catch((error) => {
