@@ -1,5 +1,6 @@
-"use client";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { api, Person } from "@/lib/api";
-export default function DashboardPage() { const [person, setPerson] = useState<Person | null>(null); useEffect(() => { api<Person>("/people/me").then(setPerson).catch(() => { window.location.assign("/login"); }); }, []); if (!person) return <main className="app-shell"><p>Memuat ruang keluarga…</p></main>; return <main className="app-shell"><p className="eyebrow">RANGKUL · RUANG KELUARGA</p><h1>Halo, mari dampingi {person.display_name}.</h1><p className="muted">Profil sudah siap. Tambahkan jurnal, susun roadmap, atau temukan layanan pada tahap berikutnya.</p><section className="dashboard-card"><h2>Profil pendampingan</h2><p><strong>{person.display_name}</strong>{person.birth_year ? ` · Lahir ${person.birth_year}` : ""}</p><p className="muted">{person.support_needs.join(" · ")}</p><Link className="primary inline" href="/app/profile">Lihat profil</Link></section></main>; }
+import { AppGuard } from "@/components/app-guard";
+import { FamilyDashboard } from "@/components/family-dashboard";
+
+export default function DashboardPage() {
+  return <AppGuard><FamilyDashboard /></AppGuard>;
+}

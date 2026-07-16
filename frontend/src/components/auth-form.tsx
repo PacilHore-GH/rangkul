@@ -4,8 +4,15 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError, CurrentUser } from "@/lib/api";
+import { PasswordField } from "@/components/password-field";
+import {
+  assertStrongPassword,
+  assertValidEmail,
+  InputValidationError,
+  sanitizeSingleLine,
+} from "@/lib/validation";
 
-const inputClass = "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100";
+const inputClass = "auth-input";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
@@ -20,15 +27,44 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
-    if (password.length < 12) return setError("Kata sandi minimal 12 karakter.");
-    if (isRegister && (!name.trim() || !terms)) return setError("Isi nama dan setujui syarat penggunaan.");
+
+    let normalizedEmail: string;
+    let sanitizedName = "";
+    try {
+      normalizedEmail = assertValidEmail(email);
+      if (isRegister) {
+        assertStrongPassword(password);
+        sanitizedName = sanitizeSingleLine(name, 1000);
+        if (sanitizedName.length > 80) {
+          throw new InputValidationError("Nama tidak boleh lebih dari 80 karakter.");
+        }
+      } else if (!password) {
+        throw new InputValidationError("Masukkan kata sandi Anda.");
+      }
+    } catch (err) {
+      setError(err instanceof InputValidationError ? err.message : "Input tidak valid.");
+      return;
+    }
+
+    if (isRegister && !sanitizedName) {
+      setError("Masukkan nama Anda.");
+      return;
+    }
+    if (isRegister && !terms) {
+      setError("Centang persetujuan penggunaan data untuk melanjutkan.");
+      return;
+    }
+
     setLoading(true);
     try {
+      const payload = isRegister
+        ? { email: normalizedEmail, password, full_name: sanitizedName, terms_accepted: terms }
+        : { email: normalizedEmail, password };
       const user = await api<CurrentUser>(`/auth/${mode}`, {
         method: "POST",
-        body: JSON.stringify(isRegister ? { email, password, full_name: name, terms_accepted: terms } : { email, password }),
+        body: JSON.stringify(payload),
       });
-      router.push(user.has_profile ? "/app/dashboard" : "/app/onboarding");
+      router.push(user.onboarding_completed ? "/app/dashboard" : "/app/onboarding");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Tidak dapat terhubung ke server.");
     } finally {
@@ -37,14 +73,23 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   }
 
   return <main className="auth-shell"><section className="auth-card">
-    <p className="eyebrow">RANGKUL · KELUARGA</p>
-    <h1>{isRegister ? "Mulai mendampingi, bersama." : "Selamat datang kembali."}</h1>
-    <p className="muted">{isRegister ? "Buat akun keluarga untuk menyimpan dukungan yang paling berarti." : "Masuk untuk melanjutkan ruang pendampingan keluarga Anda."}</p>
-    <form onSubmit={submit} className="space-y-4" noValidate>
-      {isRegister && <label>Nama Anda<input className={inputClass} value={name} onChange={e => setName(e.target.value)} autoComplete="name" /></label>}
-      <label>Email<input className={inputClass} type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required /></label>
-      <label>Kata sandi<input className={inputClass} type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete={isRegister ? "new-password" : "current-password"} required /><span className="hint">Minimal 12 karakter</span></label>
-      {isRegister && <label className="check"><input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} /> Saya menyetujui penggunaan data secara bertanggung jawab.</label>}
+    <header className="auth-header">
+      <p className="eyebrow">RANGKUL · KELUARGA</p>
+      <h1>{isRegister ? "Mulai mendampingi, bersama." : "Selamat datang kembali."}</h1>
+      <p className="muted">{isRegister ? "Buat akun keluarga untuk menyimpan dukungan yang paling berarti." : "Masuk untuk melanjutkan ruang pendampingan keluarga Anda."}</p>
+    </header>
+    <form onSubmit={submit} className="form-stack" noValidate>
+      {isRegister && <label>Nama Anda<input className={inputClass} value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={100} /></label>}
+      <label>Email<input className={inputClass} type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} required /></label>
+      <PasswordField
+        label="Kata sandi"
+        className={inputClass}
+        value={password}
+        onChange={setPassword}
+        autoComplete={isRegister ? "new-password" : "current-password"}
+        showRequirements={isRegister}
+      />
+      {isRegister && <label className="check"><input type="checkbox" checked={terms} onChange={(event) => setTerms(event.target.checked)} /> Saya menyetujui penggunaan data secara bertanggung jawab.</label>}
       {error && <p role="alert" className="form-error">{error}</p>}
       <button className="primary" disabled={loading}>{loading ? "Memproses…" : isRegister ? "Buat akun keluarga" : "Masuk"}</button>
     </form>

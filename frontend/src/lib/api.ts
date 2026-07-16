@@ -1,9 +1,56 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
   }
+}
+
+type ValidationIssue = {
+  loc?: Array<string | number>;
+  msg?: string;
+  type?: string;
+};
+
+const fieldLabels: Record<string, string> = {
+  email: "email",
+  password: "kata sandi",
+  new_password: "kata sandi baru",
+  full_name: "nama",
+  display_name: "nama panggilan",
+  birth_year: "tahun lahir",
+  support_needs: "kebutuhan dukungan",
+  notes: "catatan",
+  consent: "persetujuan",
+  terms_accepted: "persetujuan syarat penggunaan",
+  token: "tautan reset",
+};
+
+function validationMessage(issue: ValidationIssue): string {
+  const field = String(issue.loc?.at(-1) ?? "");
+  const label = fieldLabels[field] ?? "data";
+  const message = issue.msg?.toLowerCase() ?? "";
+
+  if (field === "email") return "Masukkan alamat email yang valid, misalnya nama@mail.com.";
+  if (field === "password" || field === "new_password") {
+    if (message.includes("at least") || issue.type === "string_too_short") return "Kata sandi harus terdiri dari minimal 12 karakter.";
+    if (message.includes("at most") || issue.type === "string_too_long") return "Kata sandi tidak boleh lebih dari 128 karakter.";
+    return issue.msg ?? "Kata sandi belum memenuhi ketentuan keamanan.";
+  }
+  if (issue.type === "missing") return `Mohon isi ${label}.`;
+  if (message.includes("greater than or equal")) return `${label[0].toUpperCase()}${label.slice(1)} terlalu kecil.`;
+  if (message.includes("less than or equal")) return `${label[0].toUpperCase()}${label.slice(1)} melebihi batas yang diperbolehkan.`;
+  if (message.includes("too long")) return `${label[0].toUpperCase()}${label.slice(1)} terlalu panjang.`;
+  if (message.includes("too short")) return `Mohon isi ${label}.`;
+  return issue.msg ?? `Periksa kembali ${label}.`;
+}
+
+function errorMessage(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return [...new Set(detail.map((issue: ValidationIssue) => validationMessage(issue)))].join(" ");
+  }
+  return "Permintaan belum berhasil diproses. Silakan coba lagi.";
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -14,11 +61,21 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new ApiError(response.status, body?.detail || "Terjadi kesalahan. Coba lagi.");
+    const fallback = response.status >= 500
+      ? "Layanan sedang mengalami gangguan. Silakan coba lagi beberapa saat."
+      : errorMessage(body?.detail);
+    throw new ApiError(response.status, fallback);
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
 
-export type CurrentUser = { id: string; email: string; full_name: string; role: string; has_profile: boolean };
+export type CurrentUser = {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  has_profile: boolean;
+  onboarding_completed: boolean;
+};
 export type Person = { id: string; display_name: string; birth_year: number | null; support_needs: string[]; notes: string | null };

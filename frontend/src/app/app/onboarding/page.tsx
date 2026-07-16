@@ -1,2 +1,2 @@
-import { OnboardingWizard } from "@/components/onboarding-wizard";
-export default function OnboardingPage() { return <OnboardingWizard />; }
+import { OnboardingGate } from "@/components/onboarding-gate";
+export default function OnboardingPage() { return <OnboardingGate />; }

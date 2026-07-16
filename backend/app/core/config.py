@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "change-me-in-production"
     SESSION_COOKIE_NAME: str = "rangkul_session"
     COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     SESSION_EXPIRE_HOURS: int = 8
     RESET_TOKEN_EXPIRE_MINUTES: int = 15
     
