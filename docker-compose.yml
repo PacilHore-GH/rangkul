@@ -1,6 +1,15 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rangkul
+      POSTGRES_USER: rangkul
+      POSTGRES_PASSWORD: rangkul_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - rangkul_postgres:/var/lib/postgresql/data
+
   backend:
     build:
       context: ./backend
@@ -14,19 +23,30 @@ services:
       - APP_NAME=Rangkul Backend API
       - DEBUG=True
       - CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
+      - DATABASE_URL=postgresql+psycopg://rangkul:rangkul_dev_password@db:5432/rangkul
+      - JWT_SECRET_KEY=local-development-secret-change-before-deploy
+      - COOKIE_SECURE=False
+      - COOKIE_SAMESITE=lax
+    depends_on:
+      - db
     # We can override command for local live reload development
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://backend:8000
     container_name: rangkul_frontend
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - BACKEND_URL=http://backend:8000
     depends_on:
       - backend
     stdin_open: true
     tty: true
+
+volumes:
+  rangkul_postgres:

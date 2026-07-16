@@ -6,8 +6,10 @@ The workflows deploy the monorepo independently after CI succeeds. Add these Git
 - `RAILWAY_TOKEN` (a Railway Project Token for the production environment)
 - `RAILWAY_PROJECT_ID`, `RAILWAY_SERVICE_ID`, and `RAILWAY_ENVIRONMENT_NAME` (normally `production`)
 
-Create a Vercel project with `frontend` as its root directory. Set `NEXT_PUBLIC_API_URL` to
-`https://<railway-service-domain>/api/v1` in both Preview and Production.
+Create a Vercel project with `frontend` as its root directory. Set the server-side
+`BACKEND_URL` to `https://<railway-service-domain>` in both Preview and Production.
+The browser calls the same-origin `/api/v1` route and Next.js proxies it to Railway,
+so the HttpOnly session cookie is not treated as a third-party cookie.
 
 Create an empty Railway service, then use the service settings to generate a public domain. If the
 service is connected directly to GitHub, set its Root Directory to `/backend`; otherwise Railway

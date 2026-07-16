@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
@@ -7,6 +7,13 @@ class Settings(BaseSettings):
     APP_NAME: str = "Rangkul Backend API"
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
+    DATABASE_URL: str = "sqlite:///./rangkul.db"
+    JWT_SECRET_KEY: str = "change-me-in-production"
+    SESSION_COOKIE_NAME: str = "rangkul_session"
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    SESSION_EXPIRE_HOURS: int = 8
+    RESET_TOKEN_EXPIRE_MINUTES: int = 15
     
     # CORS Origins can be a JSON string like '["http://localhost:3000"]' or a comma-separated list
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]

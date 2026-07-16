@@ -12,6 +12,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Frontend shared client code is source code, not a generated library.
+!frontend/src/lib/
+!frontend/src/lib/**
 lib64/
 parts/
 sdist/
@@ -54,3 +57,5 @@ Thumbs.db
 
 .vercel
 .env*
+# Local SQLite databases
+*.db
