@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 interface Item {
@@ -162,6 +163,13 @@ export default function Home() {
                 API Offline
               </span>
             )}
+
+            <Link
+              href="/app/services/search"
+              className="flex min-h-11 items-center rounded-lg bg-indigo-600 px-4 text-xs font-medium text-white transition-all hover:bg-indigo-500"
+            >
+              Cari Layanan
+            </Link>
 
             <a
               href={`${API_ORIGIN}/docs`}
