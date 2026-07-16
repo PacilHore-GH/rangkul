@@ -7,9 +7,11 @@ export interface AidProgram {
   description: string;
   provider: string;
   category: string;
+  jurisdiction: string;
+  official_url: string | null;
+  verification_status: "unverified" | "verified";
   is_active: boolean;
-  is_verified: boolean;
-  rule_version_count: number;
+  current_rule_version: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,7 +21,7 @@ export interface AidRule {
   program_id: string;
   version: number;
   status: "draft" | "published" | "archived";
-  criteria: Record<string, unknown>;
+  rule_json: Record<string, unknown>;
   human_summary: string;
   created_at: string;
   published_at: string | null;
@@ -56,7 +58,7 @@ export function createAidProgram(data: Partial<AidProgram>) {
 
 export function updateAidProgram(id: string, data: Partial<AidProgram>) {
   return api<AidProgram>(`/api/v1/aid-programs/${id}`, {
-    method: "PUT",
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }
@@ -73,7 +75,7 @@ export function getAidRules(programId: string) {
 
 export function createAidRule(
   programId: string,
-  data: { criteria: Record<string, unknown>; human_summary: string }
+  data: { rule_json: Record<string, unknown>; human_summary: string }
 ) {
   return api<AidRule>(`/api/v1/aid-programs/${programId}/rules`, {
     method: "POST",

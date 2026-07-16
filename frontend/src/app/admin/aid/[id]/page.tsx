@@ -87,8 +87,8 @@ export default function AidProgramDetailPage() {
     e.preventDefault();
     setCreatingRule(true);
     try {
-      const criteria = JSON.parse(ruleForm.criteria);
-      await createAidRule(id, { criteria, human_summary: ruleForm.human_summary });
+      const ruleJson = JSON.parse(ruleForm.criteria);
+      await createAidRule(id, { rule_json: ruleJson, human_summary: ruleForm.human_summary });
       setRuleForm({ criteria: "{\n  \n}", human_summary: "" });
       setShowRuleForm(false);
       load();
@@ -187,7 +187,7 @@ export default function AidProgramDetailPage() {
                 />
                 {program.is_active ? "Aktif" : "Nonaktif"}
               </span>
-              {program.is_verified && (
+              {program.verification_status === "verified" && (
                 <span className="px-2.5 py-1 rounded-full border bg-blue-900/40 text-blue-400 border-blue-800">
                   ✓ Terverifikasi
                 </span>
@@ -225,12 +225,12 @@ export default function AidProgramDetailPage() {
                   onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
                 >
-                  <option value="kesehatan">Kesehatan</option>
-                  <option value="pendidikan">Pendidikan</option>
-                  <option value="sosial">Sosial</option>
-                  <option value="ekonomi">Ekonomi</option>
-                  <option value="infrastruktur">Infrastruktur</option>
-                  <option value="pertanian">Pertanian</option>
+                  <option value="disability_support">Disabilitas</option>
+                  <option value="health">Kesehatan</option>
+                  <option value="education">Pendidikan</option>
+                  <option value="financial">Keuangan</option>
+                  <option value="housing">Perumahan</option>
+                  <option value="other">Lainnya</option>
                 </select>
               </label>
               <label className="block">

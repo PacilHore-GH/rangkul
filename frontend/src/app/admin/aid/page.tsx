@@ -256,7 +256,7 @@ export default function AidProgramsPage() {
                 <h3 className="font-semibold text-zinc-100 group-hover:text-white leading-tight">
                   {p.name}
                 </h3>
-                {p.is_verified && (
+                {p.verification_status === "verified" && (
                   <span title="Terverifikasi" className="text-blue-400 ml-2">
                     ✓
                   </span>
