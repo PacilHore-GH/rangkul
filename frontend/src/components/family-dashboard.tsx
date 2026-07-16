@@ -1,25 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { api, ApiError, Person } from "@/lib/api";
 import { LogoutButton } from "@/components/logout-button";
+import { useActivePerson } from "@/features/people/active-person-context";
+import { relationshipOptions, supportNeedOptions } from "@/lib/person-options";
+
+const sectionLabels: Record<string, string> = {
+  basic: "Data dasar",
+  support_needs: "Kebutuhan dukungan",
+  preferences: "Preferensi",
+  notes: "Catatan pendampingan",
+};
 
 export function FamilyDashboard() {
-  const [people, setPeople] = useState<Person[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api<Person[]>("/people")
-      .then(setPeople)
-      .catch((err) => {
-        if (!(err instanceof ApiError && err.status === 404)) {
-          setError("Profil pendampingan belum dapat dimuat. Silakan coba lagi.");
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const { people, activePerson, activePersonId, selectPerson, loading } = useActivePerson();
 
   return <main className="app-shell">
     <header className="app-header">
@@ -29,24 +23,30 @@ export function FamilyDashboard() {
       </div>
       <LogoutButton />
     </header>
-    {loading ? <p>Memuat ruang keluarga…</p> : people.length ? (
+    {loading ? <p>Memuat ruang keluarga…</p> : activePerson ? (
       <>
-        <p className="muted">Kelola kebutuhan dukungan setiap anggota keluarga dalam satu ruang pendampingan.</p>
-        <section className="dashboard-card">
-          <div className="section-heading">
-            <h2>Orang yang didampingi</h2>
-            <Link className="primary inline" href="/app/profile">Kelola dan tambah profil</Link>
+        <section className="dashboard-card active-person-card">
+          <div>
+            <label>Orang yang sedang didampingi<select className="field" value={activePersonId ?? ""} onChange={(event) => selectPerson(event.target.value)}>
+              {people.map((person) => <option key={person.id} value={person.id}>{person.display_name}</option>)}
+            </select></label>
           </div>
-          <div className="profile-list">
-            {people.map((person) => <article className="profile-list-item" key={person.id}>
-              <div>
-                <h3>{person.display_name}</h3>
-                <p className="muted">
-                  {person.birth_year ? `Lahir ${person.birth_year} · ` : ""}
-                  {person.support_needs.join(" · ")}
-                </p>
-              </div>
-            </article>)}
+          <Link className="primary inline" href="/app/profile">Tambah atau kelola profil</Link>
+        </section>
+        <section className="dashboard-card">
+          <p className="eyebrow">PROFIL AKTIF</p>
+          <h2>{activePerson.display_name}</h2>
+          <p className="muted">
+            {relationshipOptions.find(([code]) => code === activePerson.caregiver_relationship)?.[1] ?? "Hubungan belum ditentukan"}
+            {" · "}
+            {activePerson.support_needs.map((code) => supportNeedOptions.find(([value]) => value === code)?.[1] ?? code).join(", ")}
+          </p>
+          <div className="completeness">
+            <div className="section-heading"><strong>Kelengkapan profil</strong><strong>{activePerson.completeness.percentage}%</strong></div>
+            <div className="progress"><span style={{ width: `${activePerson.completeness.percentage}%` }} /></div>
+            <ul>{activePerson.completeness.sections.map((section) => <li key={section.code} className={section.completed ? "complete" : ""}>
+              {section.completed ? "✓" : "○"} {sectionLabels[section.code] ?? section.code}
+            </li>)}</ul>
           </div>
         </section>
       </>
@@ -57,6 +57,5 @@ export function FamilyDashboard() {
         <Link className="primary inline" href="/app/profile">Tambahkan profil</Link>
       </section>
     )}
-    {error && <p role="alert" className="form-error">{error}</p>}
   </main>;
 }

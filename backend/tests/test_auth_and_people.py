@@ -89,15 +89,15 @@ def test_reset_is_private_one_use_and_revokes_sessions(client):
 
 
 @pytest.mark.parametrize("payload, expected", [
-    ({"display_name": " ", "support_needs": ["communication"], "consent": True}, 422),
-    ({"display_name": "A", "birth_year": 1899, "support_needs": ["communication"], "consent": True}, 422),
-    ({"display_name": "A", "birth_year": 1900, "support_needs": ["communication"], "consent": True}, 201),
-    ({"display_name": "A" * 80, "birth_year": 2026, "support_needs": ["communication"] * 1, "consent": True}, 201),
-    ({"display_name": "A" * 81, "support_needs": ["communication"], "consent": True}, 422),
-    ({"display_name": "A", "support_needs": [], "consent": True}, 422),
-    ({"display_name": "A", "support_needs": ["not-a-code"], "consent": True}, 422),
-    ({"display_name": "A", "support_needs": ["communication"], "notes": "x" * 1001, "consent": True}, 422),
-    ({"display_name": "A", "support_needs": ["communication"], "consent": False}, 422),
+    ({"display_name": " ", "support_needs": ["communication"], "caregiver_relationship": "parent", "consent": True}, 422),
+    ({"display_name": "A", "birth_year": 1899, "support_needs": ["communication"], "caregiver_relationship": "parent", "consent": True}, 422),
+    ({"display_name": "A", "birth_year": 1900, "support_needs": ["communication"], "caregiver_relationship": "parent", "consent": True}, 201),
+    ({"display_name": "A" * 80, "birth_year": 2026, "support_needs": ["communication"] * 1, "caregiver_relationship": "parent", "consent": True}, 201),
+    ({"display_name": "A" * 81, "support_needs": ["communication"], "caregiver_relationship": "parent", "consent": True}, 422),
+    ({"display_name": "A", "support_needs": [], "caregiver_relationship": "parent", "consent": True}, 422),
+    ({"display_name": "A", "support_needs": ["not-a-code"], "caregiver_relationship": "parent", "consent": True}, 422),
+    ({"display_name": "A", "support_needs": ["communication"], "notes": "x" * 1001, "caregiver_relationship": "parent", "consent": True}, 422),
+    ({"display_name": "A", "support_needs": ["communication"], "caregiver_relationship": "parent", "consent": False}, 422),
 ])
 def test_onboarding_input_bva_and_unhappy_cases(client, payload, expected):
     http, _ = client
@@ -109,7 +109,7 @@ def test_onboarding_happy_path_second_profile_and_unauthorized(client):
     http, _ = client
     assert http.post("/api/v1/people/onboarding", json={}).status_code == 401
     register(http)
-    payload = {"display_name": "Adit", "birth_year": 2020, "support_needs": ["communication", "sensory"], "notes": "Suka rutinitas.", "consent": True}
+    payload = {"display_name": "Adit", "birth_year": 2020, "support_needs": ["communication", "sensory"], "notes": "Suka rutinitas.", "caregiver_relationship": "parent", "consent": True}
     assert http.post("/api/v1/people/onboarding", json=payload).status_code == 201
     assert http.get("/api/v1/people/me").json()["display_name"] == "Adit"
     second = http.post("/api/v1/people", json={**payload, "display_name": "Naya"})

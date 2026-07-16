@@ -59,3 +59,5 @@ Thumbs.db
 .env*
 # Local SQLite databases
 *.db
+/frontend/playwright-report/
+/frontend/test-results/

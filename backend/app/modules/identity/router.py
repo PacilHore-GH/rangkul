@@ -1,24 +1,30 @@
 """HTTP adapter for the Identity module."""
 
+import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from email_validator import EmailNotValidError, validate_email
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.schemas import StrictInputModel
+from app.core.security import enforce_rate_limit, require_trusted_origin
 from app.core.text import sanitize_single_line
 from app.db import get_db
 from app.models import PersonProfile, User
 from app.modules.identity.password_policy import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, validate_password_strength
+from app.modules.identity.mailer import Mailer, get_mailer
 from app.modules.identity.service import (
     consume_reset_token, create_reset_token, create_session, get_current_user,
     hash_password, normalize_email, revoke_session, verify_password,
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def clean_name(value: str) -> str:
@@ -28,7 +34,7 @@ def clean_name(value: str) -> str:
     return value
 
 
-class RegisterInput(BaseModel):
+class RegisterInput(StrictInputModel):
     email: EmailStr
     password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     full_name: str
@@ -52,16 +58,16 @@ class RegisterInput(BaseModel):
         return value
 
 
-class LoginInput(BaseModel):
+class LoginInput(StrictInputModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
 
 
-class ResetRequestInput(BaseModel):
-    email: EmailStr
+class ResetRequestInput(StrictInputModel):
+    email: str
 
 
-class ResetConfirmInput(BaseModel):
+class ResetConfirmInput(StrictInputModel):
     token: str = Field(min_length=1)
     new_password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
 
@@ -93,7 +99,15 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 
 @router.post("/register", response_model=UserOutput, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterInput, response: Response, db: Session = Depends(get_db)) -> UserOutput:
+def register(
+    payload: RegisterInput,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UserOutput:
+    require_trusted_origin(request)
+    enforce_rate_limit(db, scope="register_ip", subject=request.client.host if request.client else "unknown",
+                       limit=5, window_seconds=900)
     email = normalize_email(str(payload.email))
     if db.scalar(select(User.id).where(User.email == email)):
         raise HTTPException(status_code=409, detail="Email sudah terdaftar.")
@@ -110,17 +124,48 @@ def register(payload: RegisterInput, response: Response, db: Session = Depends(g
 
 
 @router.post("/login", response_model=UserOutput)
-def login(payload: LoginInput, response: Response, db: Session = Depends(get_db)) -> UserOutput:
-    user = db.scalar(select(User).where(User.email == normalize_email(str(payload.email))))
-    if not user or not verify_password(payload.password, user.password_hash):
+def login(
+    payload: LoginInput,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UserOutput:
+    require_trusted_origin(request)
+    normalized_email = normalize_email(str(payload.email))
+    ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(db, scope="login_ip", subject=ip, limit=10, window_seconds=900)
+    enforce_rate_limit(db, scope="login_email", subject=normalized_email, limit=5, window_seconds=900)
+    user = db.scalar(select(User).where(User.email == normalized_email))
+    if not user or user.role != "family" or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Email atau kata sandi tidak valid.")
+    _set_session_cookie(response, create_session(db, user))
+    return _user_output(db, user)
+
+
+@router.post("/admin/login", response_model=UserOutput)
+def admin_login(
+    payload: LoginInput,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> UserOutput:
+    require_trusted_origin(request)
+    normalized_email = normalize_email(str(payload.email))
+    ip = request.client.host if request.client else "unknown"
+    enforce_rate_limit(db, scope="admin_login_ip", subject=ip, limit=10, window_seconds=900)
+    enforce_rate_limit(db, scope="admin_login_email", subject=normalized_email, limit=5, window_seconds=900)
+    user = db.scalar(select(User).where(User.email == normalized_email))
+    if not user or user.role != "admin" or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Email atau kata sandi tidak valid.")
     _set_session_cookie(response, create_session(db, user))
     return _user_output(db, user)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response, session_token: Annotated[str | None, Cookie(alias=settings.SESSION_COOKIE_NAME)] = None,
+def logout(request: Request, response: Response,
+           session_token: Annotated[str | None, Cookie(alias=settings.SESSION_COOKIE_NAME)] = None,
            db: Session = Depends(get_db)) -> None:
+    require_trusted_origin(request)
     get_current_user(db, session_token)
     revoke_session(db, session_token)
     response.delete_cookie(
@@ -139,14 +184,48 @@ def me(session_token: Annotated[str | None, Cookie(alias=settings.SESSION_COOKIE
 
 
 @router.post("/password-reset/request", status_code=status.HTTP_202_ACCEPTED)
-def request_reset(payload: ResetRequestInput, db: Session = Depends(get_db)) -> dict:
-    user = db.scalar(select(User).where(User.email == normalize_email(str(payload.email))))
+def request_reset(
+    payload: ResetRequestInput,
+    request: Request,
+    db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+) -> dict:
+    require_trusted_origin(request)
+    ip = request.client.host if request.client else "unknown"
+    normalized_email = normalize_email(payload.email)
+    enforce_rate_limit(db, scope="reset_ip", subject=ip, limit=5, window_seconds=900)
+    enforce_rate_limit(db, scope="reset_email", subject=normalized_email, limit=3, window_seconds=1800)
+    try:
+        validated = validate_email(normalized_email, check_deliverability=False).normalized.lower()
+    except EmailNotValidError:
+        validated = None
+    user = db.scalar(select(User).where(User.email == validated)) if validated else None
     if user:
         token = create_reset_token(db, user)
-        print(f"[Rangkul reset link] /reset-password?token={token}")
+        reset_url = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={token}"
+        try:
+            mailer.send_password_reset(
+                recipient=user.email,
+                reset_url=reset_url,
+                expires_minutes=settings.RESET_TOKEN_EXPIRE_MINUTES,
+            )
+        except Exception:
+            logger.exception("Password reset delivery failed.")
     return {"message": "Jika email terdaftar, tautan reset telah dikirim."}
 
 
 @router.post("/password-reset/confirm", status_code=status.HTTP_204_NO_CONTENT)
-def confirm_reset(payload: ResetConfirmInput, db: Session = Depends(get_db)) -> None:
+def confirm_reset(
+    payload: ResetConfirmInput,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> None:
+    require_trusted_origin(request)
+    enforce_rate_limit(
+        db,
+        scope="reset_confirm_ip",
+        subject=request.client.host if request.client else "unknown",
+        limit=10,
+        window_seconds=900,
+    )
     consume_reset_token(db, payload.token, payload.new_password)

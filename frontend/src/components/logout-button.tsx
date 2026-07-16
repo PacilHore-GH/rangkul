@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { clearActivePersonSelections } from "@/features/people/active-person-context";
 
-export function LogoutButton() {
+export function LogoutButton({ redirectTo = "/login" }: { redirectTo?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -12,7 +13,8 @@ export function LogoutButton() {
     setLoading(true);
     try {
       await api("/auth/logout", { method: "POST" });
-      router.replace("/login");
+      clearActivePersonSelections();
+      router.replace(redirectTo);
     } finally {
       setLoading(false);
     }
