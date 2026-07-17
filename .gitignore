@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.env
 dist
 dist-ssr
 .output
@@ -16,6 +17,7 @@ dist-ssr
 .nitro
 *.local
 Rangkul_Production_PRD_MVP.md
+supabase/.temp/
 
 # Wrangler / Cloudflare
 .wrangler/
