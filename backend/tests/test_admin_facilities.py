@@ -65,6 +65,36 @@ def test_family_cannot_login_as_admin(client):
     assert login(http, "/api/v1/auth/admin/login", "family@example.com").status_code == 401
 
 
+def test_aid_programs_require_admin(client):
+    http, session_factory = client
+    assert http.get("/api/v1/aid-programs").status_code == 401
+
+    http.post("/api/v1/auth/register", json={
+        "email": "family@example.com",
+        "password": ADMIN_PASSWORD,
+        "full_name": "Family",
+        "terms_accepted": True,
+    })
+    assert http.get("/api/v1/aid-programs").status_code == 403
+    http.post("/api/v1/auth/logout")
+
+    add_user(session_factory, email="admin@example.com", role="admin")
+    login(http, "/api/v1/auth/admin/login", "admin@example.com")
+    payload = {
+        "name": "Bantuan Uji",
+        "provider": "Kementerian Uji",
+        "category": "financial",
+        "description": "Program untuk pengujian akses admin.",
+        "jurisdiction": "Nasional",
+    }
+    assert http.post(
+        "/api/v1/aid-programs",
+        json=payload,
+        headers={"Origin": "http://evil.example"},
+    ).status_code == 403
+    assert http.post("/api/v1/aid-programs", json=payload).status_code == 201
+
+
 def test_admin_facility_crud_and_family_visibility(client):
     http, session_factory = client
     add_user(session_factory, email="admin@example.com", role="admin")

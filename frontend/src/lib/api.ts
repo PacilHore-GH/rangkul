@@ -118,3 +118,61 @@ export type Facility = {
   created_at: string;
   updated_at: string;
 };
+
+export type AidProgram = {
+  id: string;
+  name: string;
+  description: string;
+  provider: string;
+  category: string;
+  jurisdiction: string;
+  official_url: string | null;
+  verification_status: "unverified" | "verified";
+  is_active: boolean;
+  current_rule_version: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AidRule = {
+  id: string;
+  program_id: string;
+  version: number;
+  status: "draft" | "published" | "archived";
+  rule_json: Record<string, unknown>;
+  human_summary: string;
+  created_at: string;
+  published_at: string | null;
+};
+
+export function getAidPrograms() {
+  return api<AidProgram[]>("/aid-programs");
+}
+
+export function getAidProgram(id: string) {
+  return api<AidProgram>(`/aid-programs/${id}`);
+}
+
+export function createAidProgram(data: Partial<AidProgram>) {
+  return api<AidProgram>("/aid-programs", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateAidProgram(id: string, data: Partial<AidProgram>) {
+  return api<AidProgram>(`/aid-programs/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deleteAidProgram(id: string) {
+  return api<void>(`/aid-programs/${id}`, { method: "DELETE" });
+}
+
+export function getAidRules(programId: string) {
+  return api<AidRule[]>(`/aid-programs/${programId}/rules`);
+}
+
+export function createAidRule(programId: string, data: { rule_json: Record<string, unknown>; human_summary: string }) {
+  return api<AidRule>(`/aid-programs/${programId}/rules`, { method: "POST", body: JSON.stringify(data) });
+}
+
+export function publishAidRule(programId: string, ruleId: string) {
+  return api<AidRule>(`/aid-programs/${programId}/rules/${ruleId}/publish`, { method: "PATCH" });
+}
