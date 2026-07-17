@@ -55,4 +55,3 @@ insert into public.knowledge_chunks(id,document_id,content) values
 ('32000000-0000-4000-8000-000000000011','31000000-0000-4000-8000-000000000003','Koordinasikan strategi keluarga dengan profesional yang tertaut.'),
 ('32000000-0000-4000-8000-000000000012','31000000-0000-4000-8000-000000000003','Dalam situasi darurat, hubungi layanan darurat setempat; jangan menunggu jawaban AI.')
 on conflict(id) do update set content=excluded.content;
-
