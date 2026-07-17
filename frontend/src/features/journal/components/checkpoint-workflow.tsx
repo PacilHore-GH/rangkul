@@ -510,7 +510,6 @@ export function CheckpointWorkflow({ config }: { config: WorkflowConfig }) {
     </div>
   );
 }
-
 function InfoTile({ label, value, subtle = false }: { label: string; value: string; subtle?: boolean }) {
   return (
     <div className={`rounded-2xl px-4 py-4 text-sm ${subtle ? "border border-[var(--line)] bg-white" : "bg-[var(--surface-soft)]"}`}>
@@ -589,5 +588,3 @@ function statusTone(status: string): "success" | "warning" | "neutral" | "accent
   if (status === "recapture_required" || status === "failed") return "warning";
   return "neutral";
 }
-
-

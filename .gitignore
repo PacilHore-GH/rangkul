@@ -54,6 +54,11 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
+# PRD Documents
+*PRD*
+*prd*
+prd/
+PRD/
 .agents
 .codex
 
