@@ -1,6 +1,12 @@
-FROM python:3.11-slim
+ARG PYTHON_IMAGE=python:3.11-slim-bookworm
+FROM ${PYTHON_IMAGE}
 WORKDIR /code
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 COPY ./requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade -r /code/requirements.txt
 COPY ./app /code/app
 CMD ["celery", "-A", "app.development_checkpoints.infrastructure.queue.celery_app", "worker", "-Q", "cpu", "--loglevel=INFO"]

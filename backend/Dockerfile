@@ -1,20 +1,20 @@
-FROM python:3.11-slim
+ARG PYTHON_IMAGE=python:3.11-slim-bookworm
+FROM ${PYTHON_IMAGE}
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
 
 # Set working directory
 WORKDIR /code
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install python dependencies
+# All current runtime dependencies provide prebuilt wheels. Avoiding
+# build-essential removes a large layer and makes a cold build much faster.
 COPY ./requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade -r /code/requirements.txt
 
 # Copy backend application source code
 COPY ./app /code/app
