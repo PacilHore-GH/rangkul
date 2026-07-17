@@ -1,31 +1,24 @@
 # Rangkul
 
-Rangkul is a FastAPI and Next.js workspace. This version adds the first production-oriented multimodal Development Journal checkpoint foundation.
+**Bersama untuk tumbuh, pulih, dan berdaya.**
 
-## Local Development
+Rangkul is an Indonesian, privacy-first care companion for families and professionals supporting people with special needs. It uses one TanStack Start application, Supabase Auth/PostgreSQL/Storage, deterministic support tools, and server-only Groq integrations.
 
-```bash
-cp .env.example .env
-docker compose up --build
+## Local setup
+
+1. Install [Bun](https://bun.sh/) and run `bun install`.
+2. Copy `.env.example` to `.env.local` and provide a Supabase project. Never expose service-role or Groq keys through `VITE_*` variables.
+3. Apply the migrations in `supabase/migrations` and optionally run the idempotent demo seed documented in `supabase/seed.sql`.
+4. Run `bun run dev`.
+
+## Review gate
+
+```sh
+bun install --frozen-lockfile
+bun run lint
+bun run typecheck
+bun test
+bun run build
 ```
 
-Open the frontend at `http://localhost:3000` and API docs at `http://localhost:8000/docs`.
-
-## Checkpoint Flow
-
-1. Fetch checkpoint templates.
-2. Create a consented checkpoint for a `PersonProfile`.
-3. Complete the private asset upload lifecycle.
-4. Submit the checkpoint.
-5. Read structured results and the Indonesian professional-review draft.
-6. Approve or request recapture through the review API.
-
-## Models
-
-Model files are not committed. See `backend/model_manifest.yaml` and `docs/runbooks/model-bootstrap.md`.
-
-```bash
-make models-verify
-```
-
-Local development defaults to `AI_USE_FAKE_MODELS=true` for deterministic tests and UI work.
+The application is decision support, not a diagnosis, prescription, emergency, or guaranteed-outcome system. Demo records are synthetic and clearly labeled.

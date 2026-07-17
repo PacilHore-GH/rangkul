@@ -1,0 +1,12 @@
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+
+// Lovable AI Gateway provider — server-only.
+export function createLovableAiGatewayProvider(apiKey: string) {
+  return createOpenAICompatible({
+    name: "lovable",
+    baseURL: "https://ai.gateway.lovable.dev/v1",
+    headers: { "Lovable-API-Key": apiKey },
+  });
+}
+
+export const DEFAULT_CHAT_MODEL = "google/gemini-3.5-flash";
