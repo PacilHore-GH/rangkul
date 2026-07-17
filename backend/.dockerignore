@@ -1,0 +1,19 @@
+# Keep the build context small and keep dependency layers cacheable.
+.git
+.env*
+.pytest_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+*.db
+*.log
+env
+.venv
+venv
+storage
+debug_storage*
+tests
+migrations
+scripts
+Dockerfile*
+README.md
