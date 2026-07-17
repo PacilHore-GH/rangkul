@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, UploadFile
@@ -28,7 +27,6 @@ from app.development_checkpoints.infrastructure.storage import object_storage
 from app.models import (
     CheckpointAnalysisJob,
     CheckpointAsset,
-    CheckpointEventSegment,
     CheckpointFaceResult,
     CheckpointMotionEmbedding,
     CheckpointPoseSequence,

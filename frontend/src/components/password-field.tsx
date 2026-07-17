@@ -29,6 +29,7 @@ export function PasswordField({
 }: PasswordFieldProps) {
   const generatedId = useId();
   const id = providedId ?? generatedId;
+  const hintId = `${id}-hint`;
   const [visible, setVisible] = useState(false);
 
   return (
@@ -44,6 +45,7 @@ export function PasswordField({
           autoComplete={autoComplete}
           required
           aria-invalid={Boolean(error)}
+          aria-describedby={error || !showRequirements ? hintId : undefined}
         />
         <button
           type="button"
@@ -65,6 +67,7 @@ export function PasswordField({
         </button>
       </div>
       {showRequirements ? (
+        <>
         <ul className="password-requirements" aria-label="Ketentuan kata sandi">
           {passwordRequirements(value).map((requirement) => (
             <li key={requirement.key} className={requirement.met ? "met" : ""}>
@@ -73,8 +76,18 @@ export function PasswordField({
             </li>
           ))}
         </ul>
+        {error ? (
+          <span id={hintId} className="hint hint-error" role="alert">
+            {error}
+          </span>
+        ) : null}
+        </>
       ) : (
-        <span className={`hint ${error ? "hint-error" : ""}`}>
+        <span
+          id={hintId}
+          className={`hint ${error ? "hint-error" : ""}`}
+          role={error ? "alert" : undefined}
+        >
           {error || hint || "Masukkan kata sandi Anda"}
         </span>
       )}

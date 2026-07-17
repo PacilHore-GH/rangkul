@@ -1,4 +1,4 @@
-from app.ai_runtime.protocols import GeneratedReport, ReportPayload
+from app.ai_runtime.protocols import GeneratedReport
 
 
 FORBIDDEN_REPORT_TERMS = ["diagnosis", "normal", "abnormal", "caused by", "disebabkan oleh rekomendasi"]
