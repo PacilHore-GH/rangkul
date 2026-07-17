@@ -25,7 +25,7 @@ export function AuthHeroPanel({
           src="/auth-hero-cover.png"
           alt="Ilustrasi pendamping dan anak melakukan high five di ruang terapi yang hangat dan tenang."
           fill
-          priority={!compact}
+          loading="eager"
           sizes={compact ? "(max-width: 767px) 100vw, 0px" : "(max-width: 1023px) 50vw, 44vw"}
           className="auth-hero-image"
         />

@@ -9,6 +9,10 @@ test("family auth, onboarding, multi-profile CRUD, and logout session", async ({
   });
 
   await page.goto("/register");
+  await expect(page).toHaveURL(/\/register\/role/);
+  await page.getByRole("radio", { name: /Keluarga & caregiver/ }).click();
+  await page.getByRole("button", { name: "Lanjutkan pendaftaran" }).click();
+  await expect(page).toHaveURL(/\/register\/account\?role=family/);
   await page.getByLabel("Nama Anda").fill("Ibu Rani");
   await page.getByLabel("Email").fill(email);
   await page.getByRole("textbox", { name: "Kata sandi", exact: true }).fill("Password-Aman12!");

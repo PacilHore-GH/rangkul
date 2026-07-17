@@ -9,6 +9,7 @@ os.environ["COOKIE_SECURE"] = "False"
 os.environ["COOKIE_SAMESITE"] = "lax"
 os.environ["TRUSTED_ORIGINS"] = '["http://testserver"]'
 os.environ["CSRF_ENABLED"] = "True"
+os.environ["CELERY_TASK_ALWAYS_EAGER"] = "True"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,9 +34,14 @@ def client(tmp_path):
             db.close()
 
     app.dependency_overrides[get_db] = override_db
+    from app.development_checkpoints.infrastructure.queue import tasks as checkpoint_tasks
+
+    original_session_factory = checkpoint_tasks.SessionLocal
+    checkpoint_tasks.SessionLocal = testing_session
     with TestClient(app, headers={
         "Origin": "http://testserver",
         "Idempotency-Key": "11111111-1111-4111-8111-111111111111",
     }) as test_client:
         yield test_client, testing_session
+    checkpoint_tasks.SessionLocal = original_session_factory
     app.dependency_overrides.clear()

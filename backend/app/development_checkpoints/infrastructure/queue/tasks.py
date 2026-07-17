@@ -35,9 +35,9 @@ from app.development_checkpoints.domain.enums import ProcessingStatus, QualitySt
 def process_submission(self, checkpoint_id: str) -> dict:
     import numpy as np
 
-    checkpoint_uuid = UUID(checkpoint_id)
+    checkpoint_key = str(UUID(checkpoint_id))
     with SessionLocal() as db:
-        checkpoint = db.scalar(select(DevelopmentCheckpoint).where(DevelopmentCheckpoint.id == checkpoint_uuid))
+        checkpoint = db.scalar(select(DevelopmentCheckpoint).where(DevelopmentCheckpoint.id == checkpoint_key))
         if checkpoint is None:
             return {"status": "missing"}
         existing_report = db.scalar(select(CheckpointReport).where(CheckpointReport.checkpoint_id == checkpoint.id))
@@ -46,14 +46,14 @@ def process_submission(self, checkpoint_id: str) -> dict:
         template = db.scalar(select(CheckpointTemplate).where(CheckpointTemplate.id == checkpoint.template_id))
         job = db.scalar(
             select(CheckpointAnalysisJob).where(
-                CheckpointAnalysisJob.checkpoint_id == checkpoint_uuid,
+                CheckpointAnalysisJob.checkpoint_id == checkpoint_key,
                 CheckpointAnalysisJob.processing_version == checkpoint.processing_version,
             )
         )
         if job:
             job.status = "running"
             job.attempts += 1
-        speech = face = motion = None
+        speech = face = None
         if checkpoint.capture_mode == "voice":
             speech = FakeSpeechAnalyzer().analyze_fixture()
             model = _ensure_model(db, "fake_speech", speech.model_revision, 1280)
@@ -89,7 +89,6 @@ def process_submission(self, checkpoint_id: str) -> dict:
                     metadata_json={"complete_repetitions": 2},
                 )
             )
-            motion = {"embedding_dimension": 512, "valid_pose_ratio": 0.88, "complete_repetitions": 2}
         db.add(
             CheckpointReferenceComparison(
                 checkpoint_id=checkpoint.id,
