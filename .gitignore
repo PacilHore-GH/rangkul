@@ -44,3 +44,6 @@ Rangkul_Production_PRD_MVP.md
 .codex
 .tmp
 .vscode
+
+# Supabase CLI local state
+supabase/.temp/
