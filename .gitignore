@@ -17,6 +17,11 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
+.env.*
+!.env.example
+.vercel/
+.lovable/
 Rangkul_Production_PRD_MVP.md
 
 # Wrangler / Cloudflare
@@ -33,3 +38,9 @@ Rangkul_Production_PRD_MVP.md
 *.njsproj
 *.sln
 *.sw?
+.lovable
+.tanstack
+.agents
+.codex
+.tmp
+.vscode

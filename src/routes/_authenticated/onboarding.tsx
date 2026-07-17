@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { RangkulMark } from "@/components/brand/Logo";
 import { createPersonProfile, listPersonProfiles } from "@/lib/person-profile.functions";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { firstValidationMessage, personProfileInputSchema } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -48,17 +49,18 @@ function Onboarding() {
   }, [existing, navigate]);
 
   const mut = useMutation({
-    mutationFn: () =>
-      createFn({
-        data: {
+    mutationFn: () => {
+      const parsed = personProfileInputSchema.safeParse({
           display_name: display_name.trim(),
           age: age ? Number(age) : null,
           support_needs: needs,
           support_summary: summary.trim(),
           emergency_contact_name: ecName.trim(),
           emergency_contact_phone: ecPhone.trim(),
-        },
-      }),
+      });
+      if (!parsed.success) throw new Error(firstValidationMessage(parsed.error));
+      return createFn({ data: parsed.data });
+    },
     onSuccess: async () => {
       await qc.invalidateQueries();
       toast.success("Profil tersimpan", { description: "Selamat datang di Rangkul." });
@@ -106,6 +108,8 @@ function Onboarding() {
               <input
                 id="pname"
                 value={display_name}
+                maxLength={80}
+                required
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Alya"
                 className="mt-1 h-11 w-full rounded-lg border border-border-default bg-surface px-3 text-sm outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
@@ -127,6 +131,7 @@ function Onboarding() {
                   type="number"
                   min={0}
                   max={120}
+                  step={1}
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                   placeholder="mis. 6"
@@ -172,6 +177,7 @@ function Onboarding() {
                 onChange={(e) => setSummary(e.target.value)}
                 placeholder="Contoh: Alya berusia 6 tahun, saat ini fokus pada terapi wicara. Suka menggambar dan musik."
                 rows={5}
+                maxLength={1000}
                 className="mt-1 w-full rounded-lg border border-border-default bg-surface p-3 text-sm outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
               />
               <p className="mt-1 text-xs text-text-secondary">
@@ -189,6 +195,7 @@ function Onboarding() {
                 <input
                   id="ecn"
                   value={ecName}
+                  maxLength={120}
                   onChange={(e) => setEcName(e.target.value)}
                   placeholder="mis. Ayah"
                   className="mt-1 h-11 w-full rounded-lg border border-border-default bg-surface px-3 text-sm outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
@@ -201,6 +208,8 @@ function Onboarding() {
                 <input
                   id="ecp"
                   inputMode="tel"
+                  maxLength={40}
+                  autoComplete="tel"
                   value={ecPhone}
                   onChange={(e) => setEcPhone(e.target.value)}
                   placeholder="mis. 0812-3456-7890"

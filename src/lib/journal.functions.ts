@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { z } from "zod";
+import { journalInputSchema } from "./validation";
+import { enforceRateLimit } from "./rate-limit.server";
+import { PublicError } from "./public-error";
 
 export const listJournalEntries = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -23,15 +25,9 @@ export const listJournalEntries = createServerFn({ method: "GET" })
 
 export const createJournalEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        content: z.string().min(1).max(2000),
-        mood_tag: z.string().min(1).max(30),
-      })
-      .parse(input),
-  )
+  .inputValidator((input: unknown) => journalInputSchema.parse(input))
   .handler(async ({ data, context }) => {
+    await enforceRateLimit(context.supabase, "journal");
     const { data: profile } = await context.supabase
       .from("person_profiles")
       .select("id")
@@ -48,6 +44,9 @@ export const createJournalEntry = createServerFn({ method: "POST" })
       })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[journal:create]", error);
+      throw new PublicError("Catatan tidak dapat disimpan. Silakan coba lagi.");
+    }
     return row;
   });

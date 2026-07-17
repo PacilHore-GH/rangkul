@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider, DEFAULT_CHAT_MODEL } from "./ai-gateway.server";
+import { createAiGatewayProvider, getAiGatewayConfig } from "./ai-gateway.server";
+import { roadmapItemInputSchema } from "./validation";
+import { enforceRateLimit } from "./rate-limit.server";
+import { PublicError } from "./public-error";
 
 const RoadmapSchema = z.object({
   weekly: z.array(z.object({ title: z.string(), description: z.string() })),
@@ -39,8 +42,13 @@ export const getActiveRoadmap = createServerFn({ method: "GET" })
 export const generateRoadmap = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("Kunci AI belum tersedia. Coba lagi sebentar.");
+    await enforceRateLimit(context.supabase, "roadmap");
+    let aiConfig;
+    try {
+      aiConfig = getAiGatewayConfig();
+    } catch {
+      throw new PublicError("Asisten AI belum tersedia. Coba lagi sebentar.", 503);
+    }
 
     const { data: profile, error: pErr } = await context.supabase
       .from("person_profiles")
@@ -50,7 +58,7 @@ export const generateRoadmap = createServerFn({ method: "POST" })
     if (pErr) throw new Error(pErr.message);
     if (!profile) throw new Error("Belum ada Person Profile aktif.");
 
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const gateway = createAiGatewayProvider(aiConfig);
 
     const prompt = [
       "Anda adalah pendamping keluarga (bukan dokter) yang membantu menyusun rencana dukungan awal.",
@@ -73,14 +81,14 @@ export const generateRoadmap = createServerFn({ method: "POST" })
     let plan: z.infer<typeof RoadmapSchema>;
     try {
       const result = await generateObject({
-        model: gateway(DEFAULT_CHAT_MODEL),
+        model: gateway(aiConfig.model),
         schema: RoadmapSchema,
         prompt,
       });
       plan = result.object;
     } catch (e) {
       console.error("[roadmap] AI error", e);
-      throw new Error("Asisten AI sedang tidak dapat merespons. Coba lagi sebentar.");
+      throw new PublicError("Asisten AI sedang tidak dapat merespons. Coba lagi sebentar.", 503);
     }
 
     const { data: roadmap, error: rErr } = await context.supabase
@@ -88,7 +96,7 @@ export const generateRoadmap = createServerFn({ method: "POST" })
       .insert({
         owner_id: context.userId,
         person_profile_id: profile.id,
-        ai_model: DEFAULT_CHAT_MODEL,
+        ai_model: aiConfig.model,
       })
       .select()
       .single();
@@ -115,7 +123,7 @@ export const generateRoadmap = createServerFn({ method: "POST" })
 
 export const toggleRoadmapItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), status: z.enum(["open", "done"]) }).parse(input))
+  .inputValidator((input: unknown) => roadmapItemInputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("roadmap_items")

@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { z } from "zod";
 import { matchAid } from "./aid-rule-engine";
+import { aidInputSchema } from "./validation";
+import { enforceRateLimit } from "./rate-limit.server";
 
 export const matchAidForActiveProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ dtks_or_low_income: z.boolean().optional() }).parse(input ?? {}),
-  )
+  .inputValidator((input: unknown) => aidInputSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
+    await enforceRateLimit(context.supabase, "aid");
     const { data: profile, error } = await context.supabase
       .from("person_profiles")
       .select("id, age, support_needs")

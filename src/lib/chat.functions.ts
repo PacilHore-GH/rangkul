@@ -1,9 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
-import { z } from "zod";
-import { createLovableAiGatewayProvider, DEFAULT_CHAT_MODEL } from "./ai-gateway.server";
+import { createAiGatewayProvider, getAiGatewayConfig } from "./ai-gateway.server";
 import { retrieveKnowledge } from "./knowledge-base";
+import { chatInputSchema } from "./validation";
+import { enforceRateLimit } from "./rate-limit.server";
+import { PublicError } from "./public-error";
 
 export const listChatMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -29,10 +31,15 @@ Aturan mutlak:
 
 export const chatWithAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ text: z.string().trim().min(1).max(1000) }).parse(input))
+  .inputValidator((input: unknown) => chatInputSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("Kunci AI belum tersedia. Coba lagi sebentar.");
+    await enforceRateLimit(context.supabase, "chat");
+    let aiConfig;
+    try {
+      aiConfig = getAiGatewayConfig();
+    } catch {
+      throw new PublicError("Asisten AI belum tersedia. Coba lagi sebentar.", 503);
+    }
 
     // Save user message first.
     await context.supabase.from("chat_messages").insert({
@@ -57,11 +64,11 @@ export const chatWithAssistant = createServerFn({ method: "POST" })
       .limit(10);
     const recent = (history ?? []).reverse();
 
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const gateway = createAiGatewayProvider(aiConfig);
     let text: string;
     try {
       const result = await generateText({
-        model: gateway(DEFAULT_CHAT_MODEL),
+        model: gateway(aiConfig.model),
         system: SYSTEM_PROMPT,
         messages: [
           ...recent.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
@@ -83,7 +90,7 @@ export const chatWithAssistant = createServerFn({ method: "POST" })
         content: fallback,
         sources: [],
       });
-      throw new Error(fallback);
+      throw new PublicError(fallback, 503);
     }
 
     const savedSources = sources.map((s) => ({

@@ -124,6 +124,8 @@ function AsistenPage() {
               }}
               placeholder="Tanyakan sesuatu tentang dukungan keluarga..."
               rows={2}
+              maxLength={1000}
+              required
               className="min-h-[44px] flex-1 resize-none rounded-lg border border-border-default bg-surface p-3 text-sm outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
               aria-label="Pesan untuk asisten"
             />

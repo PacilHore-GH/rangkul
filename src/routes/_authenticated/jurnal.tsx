@@ -49,6 +49,8 @@ function JurnalPage() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={4}
+          maxLength={2000}
+          required
           placeholder="Contoh: Alya berhasil menyebut nama warna favoritnya untuk pertama kali."
           className="mt-1 w-full rounded-lg border border-border-default bg-surface p-3 text-sm outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
         />
@@ -71,6 +73,7 @@ function JurnalPage() {
             </button>
           ))}
           <button
+            type="button"
             onClick={() => mut.mutate()}
             disabled={!content.trim() || mut.isPending}
             className="ml-auto inline-flex h-11 items-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-text-inverse hover:bg-brand-hover disabled:opacity-60"

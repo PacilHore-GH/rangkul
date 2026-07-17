@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { RangkulLogo } from "@/components/brand/Logo";
 import { Loader2 } from "lucide-react";
+import { authInputSchema, firstValidationMessage } from "@/lib/validation";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
 
@@ -37,15 +38,21 @@ function AuthPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const parsed = authInputSchema.safeParse({ email, password, displayName: name });
+    if (!parsed.success) {
+      toast.error("Periksa data Anda", { description: firstValidationMessage(parsed.error) });
+      return;
+    }
     setLoading(true);
     try {
+      const input = parsed.data;
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          email: input.email,
+          password: input.password,
           options: {
             emailRedirectTo: `${window.location.origin}/beranda`,
-            data: { display_name: name || email.split("@")[0] },
+            data: { display_name: input.displayName || input.email.split("@")[0] },
           },
         });
         if (error) throw error;
@@ -57,7 +64,10 @@ function AuthPage() {
         if (data.session) navigate({ to: "/onboarding" });
         else toast.info("Periksa email Anda untuk verifikasi bila diminta.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: input.email,
+          password: input.password,
+        });
         if (error) throw error;
         toast.success("Selamat datang kembali");
         navigate({ to: "/beranda" });
@@ -104,6 +114,8 @@ function AuthPage() {
                 <input
                   id="name"
                   type="text"
+                  maxLength={80}
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Bunda Alya"
@@ -121,6 +133,8 @@ function AuthPage() {
               <input
                 id="email"
                 type="email"
+                maxLength={254}
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -135,11 +149,13 @@ function AuthPage() {
               <input
                 id="password"
                 type="password"
+                minLength={10}
+                maxLength={128}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 required
-                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimal 6 karakter"
+                placeholder="Minimal 10 karakter, huruf besar dan angka"
                 className="mt-1 h-11 w-full rounded-lg border border-border-default bg-surface px-3 text-sm outline-none focus:border-focus focus:ring-2 focus:ring-focus/30"
               />
             </div>
