@@ -11,8 +11,13 @@ dist/
 downloads/
 eggs/
 .eggs/
-/backend/lib/
-/backend/lib64/
+lib/
+# Frontend shared client code is source code, not a generated library.
+!frontend/src/lib/
+!frontend/src/lib/**
+!frontend/src/features/**/lib/
+!frontend/src/features/**/lib/**
+lib64/
 parts/
 sdist/
 var/
@@ -49,10 +54,21 @@ yarn-error.log*
 *.swo
 .DS_Store
 Thumbs.db
-
 # PRD Documents
 *PRD*
 *prd*
 prd/
 PRD/
+.agents
+.codex
 
+.vercel
+.env*
+*.log
+*.db
+.pytest_cache/
+backend/storage/
+backend/debug_storage*/
+frontend/.npm-cache/
+/frontend/playwright-report/
+/frontend/test-results/

@@ -41,9 +41,6 @@ export default function AidProgramsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   async function load() {
-    setLoading(true);
-    setError("");
-
     try {
       setPrograms(await getAidPrograms());
     } catch (err) {
@@ -54,6 +51,8 @@ export default function AidProgramsPage() {
   }
 
   useEffect(() => {
+    // Data loading updates state only after its awaited request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, []);
 
@@ -333,12 +332,6 @@ export default function AidProgramsPage() {
 
                   {program.is_active ? "Aktif" : "Nonaktif"}
                 </span>
-
-                {(program.rule_version_count ?? 0) > 0 && (
-                  <span className="text-sm text-secondary">
-                    {program.rule_version_count} aturan
-                  </span>
-                )}
               </div>
             </button>
           ))}

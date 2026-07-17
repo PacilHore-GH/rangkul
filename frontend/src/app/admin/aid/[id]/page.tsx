@@ -55,9 +55,6 @@ export default function AidProgramDetailPage() {
   const [publishing, setPublishing] = useState<string | null>(null);
 
   async function load() {
-    setLoading(true);
-    setError("");
-
     try {
       const [programData, ruleData] = await Promise.all([
         getAidProgram(id),
@@ -82,6 +79,8 @@ export default function AidProgramDetailPage() {
   }
 
   useEffect(() => {
+    // Data loading updates state only after its awaited requests complete.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { FacilityManager } from "@/features/facilities/facility-manager";
 
-// ponytail: no dashboard page yet, just redirect to aid programs
 export default function AdminPage() {
-  redirect("/admin/aid");
+  return <FacilityManager />;
 }

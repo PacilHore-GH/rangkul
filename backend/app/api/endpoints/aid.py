@@ -1,12 +1,16 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 from enum import Enum
 from datetime import datetime, timezone
 from uuid import uuid4
 
-# ponytail: no auth guard yet, add @require_admin dependency later
-router = APIRouter()
+from app.core.authorization import require_role
+from app.core.security import require_trusted_origin
+
+router = APIRouter(
+    dependencies=[Depends(require_role("admin")), Depends(require_trusted_origin)],
+)
 
 
 # ---------- Enums ----------

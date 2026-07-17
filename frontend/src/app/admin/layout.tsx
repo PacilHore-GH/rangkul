@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LogoutButton } from "@/components/logout-button";
+import { AdminGuard } from "@/features/admin/admin-guard";
 
 const navItems = [
   {
     href: "/admin",
-    label: "Beranda",
-    disabled: true,
+    label: "Fasilitas",
+    disabled: false,
     icon: DashboardIcon,
   },
   {
@@ -34,13 +36,6 @@ export default function AdminLayout({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   /*
-   * Tutup drawer ketika pengguna berpindah halaman.
-   */
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [pathname]);
-
-  /*
    * Saat drawer terbuka:
    * - cegah halaman di belakang ikut scroll;
    * - izinkan tombol Escape untuk menutup drawer.
@@ -63,8 +58,11 @@ export default function AdminLayout({
     };
   }, [isMenuOpen]);
 
+  if (pathname === "/admin/login") return children;
+
   return (
-    <div className="min-h-screen bg-canvas text-primary">
+    <AdminGuard>
+      <div className="min-h-screen bg-canvas text-primary">
       {/* Mobile top app bar */}
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-default-border bg-surface px-4 lg:hidden">
         <button
@@ -125,7 +123,8 @@ export default function AdminLayout({
       <main className="min-h-screen lg:pl-60">
         <div className="p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
-    </div>
+      </div>
+    </AdminGuard>
   );
 }
 
@@ -223,6 +222,7 @@ function SidebarContent({
 
       {/* Sidebar footer */}
       <div className="border-t border-default-border px-5 py-4">
+        <LogoutButton redirectTo="/admin/login" />
         <p className="text-xs text-secondary">
           © 2026 Rangkul · v0.1
         </p>
