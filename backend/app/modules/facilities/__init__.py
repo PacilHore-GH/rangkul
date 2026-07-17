@@ -1,1 +1,0 @@
-"""External facility catalog module."""
