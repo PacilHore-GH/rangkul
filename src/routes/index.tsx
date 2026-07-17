@@ -108,7 +108,7 @@ function Landing() {
             <div className="flex items-start gap-4">
               <RangkulMark size={40} className="text-accent-warm" />
               <div>
-                <h2 className="text-2xl font-semibold">Tidak sendiri dalam setiap langkah.</h2>
+                <h2 className="text-2xl font-semibold text-white">Tidak sendiri dalam setiap langkah.</h2>
                 <p className="mt-2 text-sm opacity-90">
                   Rangkul dirancang untuk keluarga yang mendampingi orang dengan kebutuhan dukungan
                   khusus — dengan bahasa yang hangat, jelas, dan menghormati martabat setiap orang.
