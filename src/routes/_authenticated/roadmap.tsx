@@ -8,7 +8,9 @@ import { generateRoadmap, getActiveRoadmap, toggleRoadmapItem } from "@/lib/road
 import { CheckCircle2, Circle, Loader2, Sparkle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/roadmap")({
-  head: () => ({ meta: [{ title: "Roadmap dukungan · Rangkul" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Roadmap dukungan · Rangkul" }, { name: "robots", content: "noindex" }],
+  }),
   component: RoadmapPage,
 });
 
@@ -37,7 +39,10 @@ function RoadmapPage() {
         description: "Panduan awal, bukan diagnosis. Diskusikan dengan tenaga profesional.",
       });
     },
-    onError: (e) => toast.error("Tidak dapat menyusun roadmap", { description: e instanceof Error ? e.message : "" }),
+    onError: (e) =>
+      toast.error("Tidak dapat menyusun roadmap", {
+        description: e instanceof Error ? e.message : "",
+      }),
   });
 
   const toggle = useMutation({
@@ -70,18 +75,22 @@ function RoadmapPage() {
         <div className="rounded-2xl border border-dashed border-border-default bg-surface p-8 text-center">
           <h2 className="text-lg font-semibold">Belum ada roadmap</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-text-secondary">
-            Belum ada target aktif. Buat satu langkah kecil yang realistis — asisten akan membantu menyusun
-            langkah mingguan, target bulanan, dan rekomendasi terapi awal.
+            Belum ada target aktif. Buat satu langkah kecil yang realistis — asisten akan membantu
+            menyusun langkah mingguan, target bulanan, dan rekomendasi terapi awal.
           </p>
         </div>
       ) : (
         <>
           <div className="mb-4 rounded-lg border border-accent-warm-soft bg-accent-warm-soft px-4 py-3 text-xs text-text-primary">
-            <strong className="font-semibold">Panduan awal.</strong> Hasil dihasilkan oleh AI berdasarkan
-            informasi yang tersedia. Bukan diagnosis atau resep. Diskusikan dengan tenaga profesional.
+            <strong className="font-semibold">Panduan awal.</strong> Hasil dihasilkan oleh AI
+            berdasarkan informasi yang tersedia. Bukan diagnosis atau resep. Diskusikan dengan
+            tenaga profesional.
           </div>
 
-          <div role="tablist" className="mb-4 inline-flex rounded-lg border border-border-default bg-surface p-1">
+          <div
+            role="tablist"
+            className="mb-4 inline-flex rounded-lg border border-border-default bg-surface p-1"
+          >
             {TABS.map((t) => (
               <button
                 key={t.key}
@@ -90,7 +99,9 @@ function RoadmapPage() {
                 onClick={() => setTab(t.key)}
                 className={
                   "inline-flex h-9 items-center rounded-md px-4 text-sm font-medium transition-colors " +
-                  (tab === t.key ? "bg-brand text-text-inverse" : "text-text-primary hover:bg-subtle")
+                  (tab === t.key
+                    ? "bg-brand text-text-inverse"
+                    : "text-text-primary hover:bg-subtle")
                 }
               >
                 {t.label}
@@ -109,7 +120,10 @@ function RoadmapPage() {
                 >
                   <button
                     onClick={() =>
-                      toggle.mutate({ id: item.id, status: item.status === "done" ? "open" : "done" })
+                      toggle.mutate({
+                        id: item.id,
+                        status: item.status === "done" ? "open" : "done",
+                      })
                     }
                     aria-label={item.status === "done" ? "Tandai belum selesai" : "Tandai selesai"}
                     className="mt-0.5 shrink-0 text-brand hover:opacity-80"
@@ -120,7 +134,9 @@ function RoadmapPage() {
                     <h3
                       className={
                         "text-base font-semibold " +
-                        (item.status === "done" ? "text-text-secondary line-through" : "text-text-primary")
+                        (item.status === "done"
+                          ? "text-text-secondary line-through"
+                          : "text-text-primary")
                       }
                     >
                       {item.title}

@@ -129,7 +129,8 @@ export const FACILITIES: Facility[] = [
     province: "Nasional",
     address: "Cek Puskesmas terdekat di wilayah Anda",
     services: ["SDIDTK", "Rujukan awal", "Imunisasi"],
-    verification_note: "Data terkurasi hackathon — tanyakan ke Puskesmas terdekat tentang layanan SDIDTK.",
+    verification_note:
+      "Data terkurasi hackathon — tanyakan ke Puskesmas terdekat tentang layanan SDIDTK.",
   },
 ];
 

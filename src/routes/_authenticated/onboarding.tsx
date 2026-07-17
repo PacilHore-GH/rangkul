@@ -64,14 +64,24 @@ function Onboarding() {
       toast.success("Profil tersimpan", { description: "Selamat datang di Rangkul." });
       navigate({ to: "/beranda", replace: true });
     },
-    onError: (e) => toast.error("Tidak dapat menyimpan", { description: e instanceof Error ? e.message : "" }),
+    onError: (e) =>
+      toast.error("Tidak dapat menyimpan", { description: e instanceof Error ? e.message : "" }),
   });
 
   const stepsMeta = [
     { title: "Siapa yang Anda dampingi?", desc: "Sebut nama panggilan yang biasa Anda gunakan." },
-    { title: "Usia dan kebutuhan dukungan", desc: "Pilih yang paling menggambarkan. Tidak apa jika masih perkiraan." },
-    { title: "Ceritakan sedikit", desc: "Deskripsi singkat membantu asisten memberikan panduan yang lebih relevan." },
-    { title: "Kontak darurat (opsional)", desc: "Hanya disimpan untuk Anda; Rangkul tidak membagikan data ini." },
+    {
+      title: "Usia dan kebutuhan dukungan",
+      desc: "Pilih yang paling menggambarkan. Tidak apa jika masih perkiraan.",
+    },
+    {
+      title: "Ceritakan sedikit",
+      desc: "Deskripsi singkat membantu asisten memberikan panduan yang lebih relevan.",
+    },
+    {
+      title: "Kontak darurat (opsional)",
+      desc: "Hanya disimpan untuk Anda; Rangkul tidak membagikan data ini.",
+    },
   ];
 
   const canNext = () => {
@@ -86,11 +96,16 @@ function Onboarding() {
     <div className="mx-auto max-w-xl">
       <div className="mb-6 flex items-center gap-3">
         <RangkulMark size={28} className="text-brand" />
-        <div className="text-sm text-text-secondary">Menyiapkan profil · Langkah {step + 1} dari 4</div>
+        <div className="text-sm text-text-secondary">
+          Menyiapkan profil · Langkah {step + 1} dari 4
+        </div>
       </div>
 
       <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-subtle">
-        <div className="h-full bg-brand transition-all" style={{ width: `${((step + 1) / 4) * 100}%` }} />
+        <div
+          className="h-full bg-brand transition-all"
+          style={{ width: `${((step + 1) / 4) * 100}%` }}
+        />
       </div>
 
       <div className="rounded-2xl border border-border-default bg-surface p-6 md:p-8">

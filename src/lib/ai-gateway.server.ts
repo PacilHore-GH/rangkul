@@ -1,12 +1,12 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 // Lovable AI Gateway provider — server-only.
-export function createLovableAiGatewayProvider(apiKey: string) {
+export function createGroqProvider(apiKey: string) {
   return createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": apiKey },
+    name: "groq",
+    baseURL: "https://api.groq.com/openai/v1",
+    apiKey,
   });
 }
 
-export const DEFAULT_CHAT_MODEL = "google/gemini-3.5-flash";
+export const DEFAULT_CHAT_MODEL = "llama-3.3-70b-versatile";

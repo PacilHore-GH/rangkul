@@ -9,7 +9,9 @@ import { RangkulMark } from "@/components/brand/Logo";
 import { Send, Loader2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/asisten")({
-  head: () => ({ meta: [{ title: "Asisten AI · Rangkul" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Asisten AI · Rangkul" }, { name: "robots", content: "noindex" }],
+  }),
   component: AsistenPage,
 });
 
@@ -46,7 +48,9 @@ function AsistenPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-messages"] }),
     onError: (e) => {
       qc.invalidateQueries({ queryKey: ["chat-messages"] });
-      toast.error("Asisten tidak dapat merespons", { description: e instanceof Error ? e.message : "" });
+      toast.error("Asisten tidak dapat merespons", {
+        description: e instanceof Error ? e.message : "",
+      });
     },
   });
 
@@ -75,8 +79,9 @@ function AsistenPage() {
       />
 
       <div className="rounded-lg border border-accent-warm-soft bg-accent-warm-soft px-4 py-3 text-xs">
-        <strong className="font-semibold">Batas asisten:</strong> Rangkul bukan dokter atau terapis. Tidak
-        memberikan diagnosis atau resep. Untuk keputusan penting, konsultasikan dengan tenaga profesional.
+        <strong className="font-semibold">Batas asisten:</strong> Rangkul bukan dokter atau terapis.
+        Tidak memberikan diagnosis atau resep. Untuk keputusan penting, konsultasikan dengan tenaga
+        profesional.
       </div>
 
       <div className="mt-4 flex min-h-[60vh] flex-col rounded-2xl border border-border-default bg-surface">
@@ -182,10 +187,14 @@ function MessageBubble({ msg }: { msg: Msg }) {
     <div className="flex items-start gap-3">
       <RangkulMark size={24} className="mt-1 shrink-0 text-brand" />
       <div className="max-w-[85%] flex-1">
-        <div className="whitespace-pre-wrap text-sm leading-relaxed text-text-primary">{msg.content}</div>
+        <div className="whitespace-pre-wrap text-sm leading-relaxed text-text-primary">
+          {msg.content}
+        </div>
         {msg.sources && msg.sources.length > 0 && (
           <div className="mt-3 space-y-1 rounded-lg border border-border-default bg-subtle p-3">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">Sumber</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">
+              Sumber
+            </div>
             <ul className="space-y-1">
               {msg.sources.map((s, i) => (
                 <li key={s.id} className="text-xs">

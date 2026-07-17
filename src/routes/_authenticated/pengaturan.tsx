@@ -9,7 +9,9 @@ import { FUTURE_ROLES_NOTE } from "@/lib/future-roles";
 import { CheckCircle2, LogOut, UserPlus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/pengaturan")({
-  head: () => ({ meta: [{ title: "Pengaturan · Rangkul" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Pengaturan · Rangkul" }, { name: "robots", content: "noindex" }],
+  }),
   component: PengaturanPage,
 });
 
@@ -36,7 +38,10 @@ function PengaturanPage() {
 
   return (
     <>
-      <PageHeader title="Pengaturan" description="Kelola profil anggota keluarga dan sesi masuk Anda." />
+      <PageHeader
+        title="Pengaturan"
+        description="Kelola profil anggota keluarga dan sesi masuk Anda."
+      />
 
       <section className="rounded-2xl border border-border-default bg-surface p-5">
         <div className="flex items-center justify-between">
@@ -82,9 +87,9 @@ function PengaturanPage() {
         <h2 className="text-base font-semibold">Arsitektur peran (masa depan)</h2>
         <p className="mt-2 text-sm text-text-secondary">
           MVP saat ini hanya membangun peran <strong>Family Member / Caregiver</strong>. Peran lain
-          direncanakan dengan skema <code className="rounded bg-subtle px-1">user_roles</code> terpisah
-          dan sistem <code className="rounded bg-subtle px-1">profile_access_grants</code> untuk berbagi
-          data dengan tenaga profesional secara aman dan dapat dicabut.
+          direncanakan dengan skema <code className="rounded bg-subtle px-1">user_roles</code>{" "}
+          terpisah dan sistem <code className="rounded bg-subtle px-1">profile_access_grants</code>{" "}
+          untuk berbagi data dengan tenaga profesional secara aman dan dapat dicabut.
         </p>
         <p className="mt-2 text-xs text-text-secondary">{FUTURE_ROLES_NOTE}</p>
       </section>

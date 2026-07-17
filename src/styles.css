@@ -77,31 +77,31 @@
   --radius: 12px;
 
   /* Rangkul brand palette (02_DESIGN_SYSTEM.md) */
-  --brand: oklch(0.516 0.069 168);            /* #347A69 */
-  --brand-hover: oklch(0.463 0.065 168);       /* #2C695B */
-  --brand-pressed: oklch(0.410 0.062 168);     /* #24584D */
-  --brand-soft: oklch(0.955 0.020 160);        /* subtle green wash */
-  --accent-warm: oklch(0.760 0.150 65);        /* #F2A64A */
-  --accent-warm-soft: oklch(0.958 0.055 75);   /* soft peach */
+  --brand: oklch(0.516 0.069 168); /* #347A69 */
+  --brand-hover: oklch(0.463 0.065 168); /* #2C695B */
+  --brand-pressed: oklch(0.41 0.062 168); /* #24584D */
+  --brand-soft: oklch(0.955 0.02 160); /* subtle green wash */
+  --accent-warm: oklch(0.76 0.15 65); /* #F2A64A */
+  --accent-warm-soft: oklch(0.958 0.055 75); /* soft peach */
 
-  --canvas: oklch(0.965 0.020 90);             /* #F7F3EA */
-  --surface: oklch(1 0 0);                      /* #FFFFFF */
-  --subtle: oklch(0.960 0.015 170);            /* #EEF4F1 */
-  --inverse: oklch(0.325 0.052 168);           /* #21483E */
+  --canvas: oklch(0.965 0.02 90); /* #F7F3EA */
+  --surface: oklch(1 0 0); /* #FFFFFF */
+  --subtle: oklch(0.96 0.015 170); /* #EEF4F1 */
+  --inverse: oklch(0.325 0.052 168); /* #21483E */
 
-  --text-primary: oklch(0.325 0.052 168);      /* #21483E */
-  --text-secondary: oklch(0.520 0.028 168);    /* #5F776F */
+  --text-primary: oklch(0.325 0.052 168); /* #21483E */
+  --text-secondary: oklch(0.52 0.028 168); /* #5F776F */
   --text-inverse: oklch(1 0 0);
-  --text-link: oklch(0.463 0.065 168);         /* #28695A */
+  --text-link: oklch(0.463 0.065 168); /* #28695A */
 
-  --border-default: oklch(0.905 0.012 170);    /* #D8E0DC */
-  --border-strong: oklch(0.760 0.017 170);     /* #A8B8B1 */
-  --focus: oklch(0.575 0.104 230);             /* #2E78A6 */
+  --border-default: oklch(0.905 0.012 170); /* #D8E0DC */
+  --border-strong: oklch(0.76 0.017 170); /* #A8B8B1 */
+  --focus: oklch(0.575 0.104 230); /* #2E78A6 */
 
-  --success: oklch(0.605 0.115 138);           /* #5F8751 */
-  --warning: oklch(0.535 0.115 55);            /* #A46716 */
-  --error: oklch(0.560 0.135 25);              /* #B94F47 */
-  --info: oklch(0.520 0.108 262);              /* #526FA3 */
+  --success: oklch(0.605 0.115 138); /* #5F8751 */
+  --warning: oklch(0.535 0.115 55); /* #A46716 */
+  --error: oklch(0.56 0.135 25); /* #B94F47 */
+  --info: oklch(0.52 0.108 262); /* #526FA3 */
 
   /* shadcn semantic tokens mapped to brand */
   --background: var(--canvas);
@@ -138,13 +138,17 @@
   * {
     border-color: var(--color-border);
   }
-  html, body {
+  html,
+  body {
     background-color: var(--color-canvas);
     color: var(--color-text-primary);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     color: var(--color-text-primary);
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -155,7 +159,9 @@
     border-radius: 6px;
   }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.001ms !important;
       transition-duration: 0.001ms !important;
     }

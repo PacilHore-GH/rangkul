@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -21,12 +21,16 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const path = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const { mode: initialMode } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">(initialMode ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<"family_member_caregiver" | "professional">(
+    "family_member_caregiver",
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,6 +38,8 @@ function AuthPage() {
       if (data.session) navigate({ to: "/beranda" });
     });
   }, [navigate]);
+
+  if (path !== "/auth") return <Outlet />;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +51,7 @@ function AuthPage() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/beranda`,
-            data: { display_name: name || email.split("@")[0] },
+            data: { display_name: name || email.split("@")[0], role },
           },
         });
         if (error) throw error;
@@ -67,10 +73,10 @@ function AuthPage() {
       const friendly = /invalid login credentials/i.test(msg)
         ? "Email atau kata sandi salah. Periksa kembali."
         : /already registered|already been registered/i.test(msg)
-        ? "Email sudah terdaftar. Silakan masuk."
-        : /password/i.test(msg) && /6/.test(msg)
-        ? "Kata sandi minimal 6 karakter."
-        : msg;
+          ? "Email sudah terdaftar. Silakan masuk."
+          : /password/i.test(msg) && /6/.test(msg)
+            ? "Kata sandi minimal 6 karakter."
+            : msg;
       toast.error("Tidak dapat memproses", { description: friendly });
     } finally {
       setLoading(false);
@@ -84,8 +90,8 @@ function AuthPage() {
           <RangkulLogo />
         </Link>
       </header>
-      <main className="mx-auto flex max-w-md flex-col px-6 pb-16 pt-6">
-        <div className="rounded-2xl border border-border-default bg-surface p-6 shadow-sm md:p-8">
+      <main className="mx-auto grid max-w-6xl gap-8 px-4 pb-16 pt-4 md:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] md:px-6 md:pt-8">
+        <div className="order-2 rounded-2xl border border-border-default bg-surface p-6 shadow-sm md:order-1 md:p-8">
           <h1 className="text-2xl font-semibold">
             {mode === "signup" ? "Buat akun keluarga" : "Masuk ke Rangkul"}
           </h1>
@@ -112,6 +118,34 @@ function AuthPage() {
                 <p className="mt-1 text-xs text-text-secondary">
                   Digunakan untuk menyapa Anda dalam aplikasi.
                 </p>
+                <fieldset className="mt-4">
+                  <legend className="text-sm font-medium">Peran akun</legend>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {(
+                      [
+                        ["family_member_caregiver", "Keluarga / caregiver"],
+                        ["professional", "Profesional"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <label
+                        key={value}
+                        className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm ${role === value ? "border-brand bg-brand-soft" : "border-border-default"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          checked={role === value}
+                          onChange={() => setRole(value)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-text-secondary">
+                    Profesional tetap memerlukan tautan keluarga. Admin dibuat oleh pengelola
+                    platform.
+                  </p>
+                </fieldset>
               </div>
             )}
             <div>
@@ -151,20 +185,33 @@ function AuthPage() {
               {loading && <Loader2 size={16} className="animate-spin" />}
               {mode === "signup" ? "Buat akun" : "Masuk"}
             </button>
+            {mode === "signin" && (
+              <div className="text-right">
+                <Link to="/auth/forgot-password" className="text-sm font-medium text-text-link">
+                  Lupa kata sandi?
+                </Link>
+              </div>
+            )}
           </form>
 
           <div className="mt-6 text-center text-sm text-text-secondary">
             {mode === "signup" ? (
               <>
                 Sudah punya akun?{" "}
-                <button className="font-medium text-text-link hover:underline" onClick={() => setMode("signin")}>
+                <button
+                  className="font-medium text-text-link hover:underline"
+                  onClick={() => setMode("signin")}
+                >
                   Masuk di sini
                 </button>
               </>
             ) : (
               <>
                 Belum punya akun?{" "}
-                <button className="font-medium text-text-link hover:underline" onClick={() => setMode("signup")}>
+                <button
+                  className="font-medium text-text-link hover:underline"
+                  onClick={() => setMode("signup")}
+                >
                   Daftar sekarang
                 </button>
               </>
@@ -172,8 +219,27 @@ function AuthPage() {
           </div>
         </div>
         <p className="mt-4 text-center text-xs text-text-secondary">
-          Dengan melanjutkan, Anda memahami bahwa Rangkul adalah pendamping — bukan pengganti tenaga profesional.
+          Dengan melanjutkan, Anda memahami bahwa Rangkul adalah pendamping — bukan pengganti tenaga
+          profesional.
         </p>
+        <aside className="order-1 overflow-hidden rounded-2xl bg-brand-soft md:order-2">
+          <div className="p-5 md:p-7">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand">
+              Rangkul bersama
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Bersama untuk tumbuh, pulih, dan berdaya.
+            </h2>
+            <p className="mt-2 text-sm text-text-secondary">
+              Pendamping keluarga dan profesional—bukan alat diagnosis.
+            </p>
+          </div>
+          <img
+            src="/images/rangkul-auth-hero.png"
+            alt="Ilustrasi 3D keluarga Rangkul yang saling mendukung"
+            className="max-h-48 w-full object-cover object-top md:max-h-none md:aspect-[4/5]"
+          />
+        </aside>
       </main>
     </div>
   );

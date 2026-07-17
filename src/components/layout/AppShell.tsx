@@ -4,22 +4,42 @@ import { RangkulLogo, RangkulMark } from "@/components/brand/Logo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getActivePersonProfile } from "@/lib/person-profile.functions";
-import { Home, Compass, MessageCircleHeart, MapPin, BookHeart, Settings, LogOut, Menu, X } from "lucide-react";
+import {
+  Home,
+  Compass,
+  MessageCircleHeart,
+  MapPin,
+  BookHeart,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Users,
+  Landmark,
+  Stethoscope,
+  Shield,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/beranda", label: "Beranda", icon: Home },
+  { to: "/people", label: "Profil", icon: Users },
   { to: "/roadmap", label: "Roadmap", icon: Compass },
   { to: "/asisten", label: "Asisten AI", icon: MessageCircleHeart },
-  { to: "/layanan", label: "Layanan", icon: MapPin },
-  { to: "/jurnal", label: "Jurnal", icon: BookHeart },
+  { to: "/services", label: "Layanan", icon: MapPin },
+  { to: "/aid", label: "Bantuan", icon: Landmark },
+  { to: "/journal", label: "Jurnal", icon: BookHeart },
+  { to: "/professional", label: "Profesional", icon: Stethoscope },
+  { to: "/admin", label: "Admin", icon: Shield },
   { to: "/pengaturan", label: "Pengaturan", icon: Settings },
 ] as const;
 
 // Primary bottom-nav destinations (max 5 per 03_UX_AND_CONTENT).
-const BOTTOM = NAV.slice(0, 5);
+const BOTTOM = NAV.filter((item) =>
+  ["/beranda", "/roadmap", "/asisten", "/services", "/journal"].includes(item.to),
+);
 
 export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -60,9 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 to={item.to}
                 className={cn(
                   "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-brand-soft text-brand"
-                    : "text-text-primary hover:bg-subtle",
+                  active ? "bg-brand-soft text-brand" : "text-text-primary hover:bg-subtle",
                 )}
               >
                 <Icon size={18} />
@@ -186,7 +204,9 @@ export function PageHeader({
     <div className="mb-6 flex flex-col gap-3 md:mb-8 md:flex-row md:items-start md:justify-between">
       <div>
         <h1 className="text-2xl font-semibold md:text-3xl">{title}</h1>
-        {description && <p className="mt-1 text-sm text-text-secondary md:text-base">{description}</p>}
+        {description && (
+          <p className="mt-1 text-sm text-text-secondary md:text-base">{description}</p>
+        )}
       </div>
       {action}
     </div>

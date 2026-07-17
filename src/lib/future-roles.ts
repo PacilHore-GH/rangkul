@@ -29,5 +29,4 @@
  * Kebijakan RLS: has_role() function + join ke profile_access_grants menentukan
  * apakah non-owner dapat membaca data Person Profile tertentu.
  */
-export const FUTURE_ROLES_NOTE =
-  "Family Member (MVP) · Professional (planned) · Admin (planned)";
+export const FUTURE_ROLES_NOTE = "Family Member (MVP) · Professional (planned) · Admin (planned)";

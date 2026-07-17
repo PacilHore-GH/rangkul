@@ -9,7 +9,9 @@ import { MapPin, ExternalLink, ShieldCheck, Loader2 } from "lucide-react";
 import type { AidMatch } from "@/lib/aid-rule-engine";
 
 export const Route = createFileRoute("/_authenticated/layanan")({
-  head: () => ({ meta: [{ title: "Layanan & bantuan · Rangkul" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Layanan & bantuan · Rangkul" }, { name: "robots", content: "noindex" }],
+  }),
   component: LayananPage,
 });
 
@@ -35,7 +37,10 @@ function LayananPage() {
         description="Daftar fasilitas dan program bantuan yang relevan. Data dikurasi manual untuk demo — verifikasi ulang sebelum kunjungan atau pengajuan."
       />
 
-      <div role="tablist" className="mb-6 inline-flex rounded-lg border border-border-default bg-surface p-1">
+      <div
+        role="tablist"
+        className="mb-6 inline-flex rounded-lg border border-border-default bg-surface p-1"
+      >
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -63,7 +68,9 @@ function FacilityList() {
   const filtered = useMemo(
     () =>
       FACILITIES.filter(
-        (f) => (province === "all" || f.province === province) && (category === "all" || f.category === category),
+        (f) =>
+          (province === "all" || f.province === province) &&
+          (category === "all" || f.category === category),
       ),
     [province, category],
   );
@@ -105,7 +112,8 @@ function FacilityList() {
 
       {filtered.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-default bg-surface p-6 text-sm text-text-secondary">
-          Belum ada layanan yang cocok dengan filter ini. Coba ubah kategori atau perluas area pencarian.
+          Belum ada layanan yang cocok dengan filter ini. Coba ubah kategori atau perluas area
+          pencarian.
         </p>
       ) : (
         <ul className="grid gap-3 md:grid-cols-2">
@@ -121,7 +129,10 @@ function FacilityList() {
               <p className="mt-2 text-sm text-text-secondary">{f.address}</p>
               <div className="mt-3 flex flex-wrap gap-1">
                 {f.services.map((s) => (
-                  <span key={s} className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand">
+                  <span
+                    key={s}
+                    className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] text-brand"
+                  >
                     {s}
                   </span>
                 ))}
@@ -150,7 +161,8 @@ function AidList() {
       <div className="rounded-2xl border border-border-default bg-surface p-5">
         <h3 className="text-base font-semibold">Kecocokan awal bantuan</h3>
         <p className="mt-1 text-sm text-text-secondary">
-          Perhitungan sederhana berdasarkan profil aktif. Keputusan akhir tetap berada pada instansi resmi.
+          Perhitungan sederhana berdasarkan profil aktif. Keputusan akhir tetap berada pada instansi
+          resmi.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-text-secondary">Status ekonomi (opsional):</span>
@@ -199,7 +211,9 @@ function AidList() {
               <p className="mt-2 text-sm text-text-secondary">{program.summary}</p>
 
               <details className="mt-3">
-                <summary className="cursor-pointer text-sm font-medium text-text-link">Persyaratan umum</summary>
+                <summary className="cursor-pointer text-sm font-medium text-text-link">
+                  Persyaratan umum
+                </summary>
                 <ul className="mt-2 list-disc pl-5 text-sm text-text-secondary">
                   {program.requirements.map((r) => (
                     <li key={r}>{r}</li>
@@ -224,7 +238,8 @@ function AidList() {
                 rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-1 text-xs text-text-link hover:underline"
               >
-                <ShieldCheck size={12} /> Sumber resmi: {program.official_source} <ExternalLink size={11} />
+                <ShieldCheck size={12} /> Sumber resmi: {program.official_source}{" "}
+                <ExternalLink size={11} />
               </a>
             </li>
           ))}
@@ -232,7 +247,8 @@ function AidList() {
       )}
       {!mut.data && !mut.isPending && (
         <p className="mt-6 text-sm text-text-secondary">
-          Tekan tombol di atas untuk melihat kecocokan awal berdasarkan profil aktif. Hasil bersifat awal.
+          Tekan tombol di atas untuk melihat kecocokan awal berdasarkan profil aktif. Hasil bersifat
+          awal.
         </p>
       )}
     </div>
@@ -242,7 +258,10 @@ function AidList() {
 function StatusPill({ status }: { status: AidMatch["status"] }) {
   const map: Record<AidMatch["status"], { label: string; className: string }> = {
     cocok_awal: { label: "Cocok awal", className: "bg-brand-soft text-brand" },
-    perlu_data_tambahan: { label: "Perlu data tambahan", className: "bg-accent-warm-soft text-warning" },
+    perlu_data_tambahan: {
+      label: "Perlu data tambahan",
+      className: "bg-accent-warm-soft text-warning",
+    },
     belum_cocok: { label: "Belum cocok", className: "bg-subtle text-text-secondary" },
   };
   const m = map[status];

@@ -37,7 +37,13 @@ export function RangkulMark({ className, size = 32 }: { className?: string; size
   );
 }
 
-export function RangkulLogo({ className, showText = true }: { className?: string; showText?: boolean }) {
+export function RangkulLogo({
+  className,
+  showText = true,
+}: {
+  className?: string;
+  showText?: boolean;
+}) {
   return (
     <div className={cn("flex items-center gap-2 text-brand", className)}>
       <RangkulMark size={28} />

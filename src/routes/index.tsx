@@ -45,7 +45,9 @@ function Landing() {
             Pendamping keluarga · Bahasa Indonesia
           </div>
           <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-            Dipahami kebutuhannya.<br className="hidden md:block" /> Dipandu langkahnya.<br className="hidden md:block" /> Dirangkul perjalanannya.
+            Dipahami kebutuhannya.
+            <br className="hidden md:block" /> Dipandu langkahnya.
+            <br className="hidden md:block" /> Dirangkul perjalanannya.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-text-secondary md:text-lg">
             Rangkul membantu keluarga yang mendampingi anggota dengan kebutuhan dukungan khusus:
@@ -77,20 +79,17 @@ function Landing() {
             {
               icon: Compass,
               title: "Rencana dukungan personal",
-              body:
-                "Asisten menyusun langkah mingguan, target bulanan, dan rekomendasi terapi awal yang bisa Anda diskusikan dengan profesional.",
+              body: "Asisten menyusun langkah mingguan, target bulanan, dan rekomendasi terapi awal yang bisa Anda diskusikan dengan profesional.",
             },
             {
               icon: MessageCircleHeart,
               title: "Asisten yang menyebutkan sumber",
-              body:
-                "Jawaban selalu merujuk pada dokumen terpercaya (WHO, Kemenkes) dan menyertakan catatan batas: panduan umum, bukan diagnosis.",
+              body: "Jawaban selalu merujuk pada dokumen terpercaya (WHO, Kemenkes) dan menyertakan catatan batas: panduan umum, bukan diagnosis.",
             },
             {
               icon: MapPin,
               title: "Layanan & bantuan pemerintah",
-              body:
-                "Daftar rumah sakit, klinik terapi, dan SLB terkurasi, plus kecocokan awal program bantuan seperti KIS, PKH, dan Kartu Disabilitas.",
+              body: "Daftar rumah sakit, klinik terapi, dan SLB terkurasi, plus kecocokan awal program bantuan seperti KIS, PKH, dan Kartu Disabilitas.",
             },
           ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="rounded-2xl border border-border-default bg-surface p-6">

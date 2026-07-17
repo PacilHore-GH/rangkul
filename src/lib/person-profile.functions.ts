@@ -41,7 +41,10 @@ export const createPersonProfile = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CreateInput.parse(input))
   .handler(async ({ data, context }) => {
     // Deactivate previous profiles first so only one is active.
-    await context.supabase.from("person_profiles").update({ active: false }).eq("owner_id", context.userId);
+    await context.supabase
+      .from("person_profiles")
+      .update({ active: false })
+      .eq("owner_id", context.userId);
     const { data: row, error } = await context.supabase
       .from("person_profiles")
       .insert({
@@ -64,7 +67,10 @@ export const setActivePersonProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    await context.supabase.from("person_profiles").update({ active: false }).eq("owner_id", context.userId);
+    await context.supabase
+      .from("person_profiles")
+      .update({ active: false })
+      .eq("owner_id", context.userId);
     const { error } = await context.supabase
       .from("person_profiles")
       .update({ active: true })

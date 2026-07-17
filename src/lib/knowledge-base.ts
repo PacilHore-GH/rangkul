@@ -174,7 +174,13 @@ export function retrieveKnowledge(query: string, limit = 3): KnowledgeEntry[] {
     .filter((t) => t.length > 2);
 
   const scored = KNOWLEDGE_BASE.map((entry) => {
-    const haystack = (entry.title + " " + entry.content + " " + entry.keywords.join(" ")).toLowerCase();
+    const haystack = (
+      entry.title +
+      " " +
+      entry.content +
+      " " +
+      entry.keywords.join(" ")
+    ).toLowerCase();
     let score = 0;
     for (const t of tokens) {
       if (entry.keywords.some((k) => k.includes(t))) score += 3;
@@ -183,10 +189,15 @@ export function retrieveKnowledge(query: string, limit = 3): KnowledgeEntry[] {
     return { entry, score };
   });
 
-  const top = scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score).slice(0, limit);
+  const top = scored
+    .filter((s) => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
   // Fallback: return 3 general entries so the assistant always has grounding.
   if (top.length === 0) {
-    return KNOWLEDGE_BASE.filter((e) => ["early-detection", "hak-difabel", "kis-pbi"].includes(e.id));
+    return KNOWLEDGE_BASE.filter((e) =>
+      ["early-detection", "hak-difabel", "kis-pbi"].includes(e.id),
+    );
   }
   return top.map((s) => s.entry);
 }

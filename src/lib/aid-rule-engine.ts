@@ -34,7 +34,8 @@ export function matchAid(input: AidInput): AidMatch[] {
 
     let status: AidMatch["status"];
     if (missing.length === 0) status = "cocok_awal";
-    else if (missing.some((m) => m.includes("belum tersedia") || m.includes("di bawah 18"))) status = "belum_cocok";
+    else if (missing.some((m) => m.includes("belum tersedia") || m.includes("di bawah 18")))
+      status = "belum_cocok";
     else status = "perlu_data_tambahan";
 
     return { program, status, missing_requirements: missing };

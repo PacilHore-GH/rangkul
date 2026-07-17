@@ -8,7 +8,9 @@ import { createJournalEntry, listJournalEntries } from "@/lib/journal.functions"
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/jurnal")({
-  head: () => ({ meta: [{ title: "Jurnal perkembangan · Rangkul" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [{ title: "Jurnal perkembangan · Rangkul" }, { name: "robots", content: "noindex" }],
+  }),
   component: JurnalPage,
 });
 
@@ -21,7 +23,10 @@ function JurnalPage() {
   const [content, setContent] = useState("");
   const [mood, setMood] = useState(MOODS[0]);
 
-  const { data: entries, isLoading } = useQuery({ queryKey: ["journal-entries"], queryFn: () => listFn() });
+  const { data: entries, isLoading } = useQuery({
+    queryKey: ["journal-entries"],
+    queryFn: () => listFn(),
+  });
 
   const mut = useMutation({
     mutationFn: () => createFn({ data: { content: content.trim(), mood_tag: mood } }),
@@ -30,7 +35,8 @@ function JurnalPage() {
       qc.invalidateQueries({ queryKey: ["journal-entries"] });
       toast.success("Catatan tersimpan");
     },
-    onError: (e) => toast.error("Tidak dapat menyimpan", { description: e instanceof Error ? e.message : "" }),
+    onError: (e) =>
+      toast.error("Tidak dapat menyimpan", { description: e instanceof Error ? e.message : "" }),
   });
 
   return (
