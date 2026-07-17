@@ -130,7 +130,7 @@ function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-6 py-8 md:flex-row md:items-center">
           <RangkulLogo />
           <p className="text-xs text-text-secondary">
-            © {new Date().getFullYear()} Rangkul · Hackathon MVP. Bukan alat diagnosis medis.
+            © {new Date().getFullYear()} Rangkul
           </p>
         </div>
       </footer>
