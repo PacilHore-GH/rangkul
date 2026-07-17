@@ -1,0 +1,175 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Rangkul design system (source: 02_DESIGN_SYSTEM.md)
+ * All colors are semantic tokens. Never hardcode brand hex values in components.
+ */
+
+@theme inline {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 24px;
+  --radius-3xl: 24px;
+  --radius-4xl: 24px;
+
+  --font-sans: "Plus Jakarta Sans", Inter, system-ui, -apple-system, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Rangkul brand tokens (mapped 1:1 from 02_DESIGN_SYSTEM.md) */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-inverse: var(--inverse);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-pressed: var(--brand-pressed);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent-warm: var(--accent-warm);
+  --color-accent-warm-soft: var(--accent-warm-soft);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-link: var(--text-link);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-focus: var(--focus);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 12px;
+
+  /* Rangkul brand palette (02_DESIGN_SYSTEM.md) */
+  --brand: oklch(0.516 0.069 168); /* #347A69 */
+  --brand-hover: oklch(0.463 0.065 168); /* #2C695B */
+  --brand-pressed: oklch(0.41 0.062 168); /* #24584D */
+  --brand-soft: oklch(0.955 0.02 160); /* subtle green wash */
+  --accent-warm: oklch(0.76 0.15 65); /* #F2A64A */
+  --accent-warm-soft: oklch(0.958 0.055 75); /* soft peach */
+
+  --canvas: oklch(0.965 0.02 90); /* #F7F3EA */
+  --surface: oklch(1 0 0); /* #FFFFFF */
+  --subtle: oklch(0.96 0.015 170); /* #EEF4F1 */
+  --inverse: oklch(0.325 0.052 168); /* #21483E */
+
+  --text-primary: oklch(0.325 0.052 168); /* #21483E */
+  --text-secondary: oklch(0.52 0.028 168); /* #5F776F */
+  --text-inverse: oklch(1 0 0);
+  --text-link: oklch(0.463 0.065 168); /* #28695A */
+
+  --border-default: oklch(0.905 0.012 170); /* #D8E0DC */
+  --border-strong: oklch(0.76 0.017 170); /* #A8B8B1 */
+  --focus: oklch(0.575 0.104 230); /* #2E78A6 */
+
+  --success: oklch(0.605 0.115 138); /* #5F8751 */
+  --warning: oklch(0.535 0.115 55); /* #A46716 */
+  --error: oklch(0.56 0.135 25); /* #B94F47 */
+  --info: oklch(0.52 0.108 262); /* #526FA3 */
+
+  /* shadcn semantic tokens mapped to brand */
+  --background: var(--canvas);
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--brand);
+  --primary-foreground: var(--text-inverse);
+  --secondary: var(--subtle);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--subtle);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--subtle);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--error);
+  --destructive-foreground: var(--text-inverse);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--focus);
+
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--text-inverse);
+  --sidebar-accent: var(--subtle);
+  --sidebar-accent-foreground: var(--brand);
+  --sidebar-border: var(--border-default);
+  --sidebar-ring: var(--focus);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@utility surface-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+}

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /onboarding
+Disallow: /beranda
+Disallow: /roadmap
+Disallow: /asisten
+Disallow: /layanan
+Disallow: /jurnal
+Disallow: /pengaturan

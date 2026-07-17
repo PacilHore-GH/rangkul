@@ -1,0 +1,10 @@
+# Rangkul
+
+> Pendamping digital untuk keluarga yang mendampingi orang dengan kebutuhan dukungan khusus di Indonesia. Tidak sendiri dalam setiap langkah.
+
+Rangkul membantu keluarga memahami kebutuhan dukungan, menyusun langkah realistis, menemukan layanan yang relevan, dan mempersiapkan konsultasi profesional. Rangkul bukan alat diagnosis dan tidak menggantikan tenaga medis, psikolog, terapis, pendidik, atau instansi pemerintah.
+
+## Pages
+
+- [Beranda](/): Pengenalan Rangkul, brand promise, dan ajakan mendaftar.
+- [Masuk / Daftar](/auth): Halaman autentikasi email dan kata sandi.
