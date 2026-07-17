@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+
 import { passwordRequirements } from "@/lib/validation";
 
 type PasswordFieldProps = {
@@ -10,6 +11,9 @@ type PasswordFieldProps = {
   autoComplete: "current-password" | "new-password";
   className?: string;
   showRequirements?: boolean;
+  hint?: string;
+  error?: string;
+  id?: string;
 };
 
 export function PasswordField({
@@ -19,8 +23,12 @@ export function PasswordField({
   autoComplete,
   className = "field",
   showRequirements = false,
+  hint,
+  error,
+  id: providedId,
 }: PasswordFieldProps) {
-  const id = useId();
+  const generatedId = useId();
+  const id = providedId ?? generatedId;
   const [visible, setVisible] = useState(false);
 
   return (
@@ -29,12 +37,13 @@ export function PasswordField({
       <div className="password-input-wrap">
         <input
           id={id}
-          className={className}
+          className={`${className} ${error ? "auth-input-error" : ""}`.trim()}
           type={visible ? "text" : "password"}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           autoComplete={autoComplete}
           required
+          aria-invalid={Boolean(error)}
         />
         <button
           type="button"
@@ -65,7 +74,9 @@ export function PasswordField({
           ))}
         </ul>
       ) : (
-        <span className="hint">Masukkan kata sandi Anda</span>
+        <span className={`hint ${error ? "hint-error" : ""}`}>
+          {error || hint || "Masukkan kata sandi Anda"}
+        </span>
       )}
     </div>
   );

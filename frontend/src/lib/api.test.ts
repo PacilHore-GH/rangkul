@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { api, ApiError } from "./api";
+import { api } from "./api";
 
 describe("API error messages", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -14,7 +14,7 @@ describe("API error messages", () => {
       }],
     }), { status: 422, headers: { "Content-Type": "application/json" } })));
 
-    await expect(api("/auth/login")).rejects.toMatchObject<ApiError>({
+    await expect(api("/auth/login")).rejects.toMatchObject({
       status: 422,
       message: "Masukkan alamat email yang valid, misalnya nama@mail.com.",
     });
@@ -23,7 +23,7 @@ describe("API error messages", () => {
   it("uses a calm service message for server failures", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
 
-    await expect(api("/auth/login")).rejects.toMatchObject<ApiError>({
+    await expect(api("/auth/login")).rejects.toMatchObject({
       status: 503,
       message: "Layanan sedang mengalami gangguan. Silakan coba lagi beberapa saat.",
     });

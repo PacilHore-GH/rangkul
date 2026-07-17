@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { api, ApiError, CurrentUser } from "@/lib/api";
 
 export function AppGuard({ children }: { children: ReactNode }) {
@@ -21,6 +22,6 @@ export function AppGuard({ children }: { children: ReactNode }) {
       });
   }, [router]);
 
-  if (!allowed) return <main className="app-shell"><p>Memeriksa sesi Anda…</p></main>;
+  if (!allowed) return <main className="app-shell"><p>Memeriksa sesi Anda...</p></main>;
   return children;
 }

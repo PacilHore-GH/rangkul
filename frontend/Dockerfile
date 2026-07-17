@@ -6,9 +6,18 @@ ARG NPM_VERSION=11.4.2
 # Stage 1: Install dependencies
 FROM ${NODE_IMAGE} AS deps
 WORKDIR /app
+ENV HTTP_PROXY=
+ENV HTTPS_PROXY=
+ENV http_proxy=
+ENV https_proxy=
+ENV NO_PROXY=*
+ENV no_proxy=*
+ENV npm_config_proxy=
+ENV npm_config_https_proxy=
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm config set fetch-retries 5 \
+    npm config set registry https://registry.npmmirror.com/ \
+    && npm config set fetch-retries 5 \
     && npm config set fetch-retry-mintimeout 20000 \
     && npm config set fetch-retry-maxtimeout 120000 \
     && npm config set fetch-timeout 300000 \

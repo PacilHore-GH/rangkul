@@ -57,7 +57,11 @@ Thumbs.db
 
 .vercel
 .env*
-# Local SQLite databases
+*.log
 *.db
+.pytest_cache/
+backend/storage/
+backend/debug_storage*/
+frontend/.npm-cache/
 /frontend/playwright-report/
 /frontend/test-results/

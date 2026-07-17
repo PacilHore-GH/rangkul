@@ -1,14 +1,30 @@
 services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: rangkul
-      POSTGRES_USER: rangkul
-      POSTGRES_PASSWORD: rangkul_dev_password
+  redis:
+    image: redis:7-alpine
     ports:
-      - "5432:5432"
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-rangkul}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-rangkul-dev-secret}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
-      - rangkul_postgres:/var/lib/postgresql/data
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-rangkul} ${S3_SECRET_ACCESS_KEY:-rangkul-dev-secret} &&
+      mc mb --ignore-existing local/${S3_BUCKET_CHECKPOINTS:-rangkul-checkpoints}
+      "
 
   backend:
     build:
@@ -20,21 +36,59 @@ services:
     volumes:
       - ./backend:/code
     environment:
-      - APP_NAME=Rangkul Backend API
-      - DEBUG=True
-      - CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
-      - DATABASE_URL=postgresql+psycopg://rangkul:rangkul_dev_password@db:5432/rangkul
-      - JWT_SECRET_KEY=local-development-secret-change-before-deploy
-      - COOKIE_SECURE=False
-      - COOKIE_SAMESITE=lax
-      - FRONTEND_URL=http://localhost:3000
-      - TRUSTED_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
-      - CSRF_ENABLED=True
-      - MAILER_BACKEND=console
+      APP_NAME: Rangkul Backend API
+      DEBUG: "false"
+      ENVIRONMENT: development
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-development-secret-change-before-deploy}
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: lax
+      FRONTEND_URL: http://localhost:3000
+      TRUSTED_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+      CSRF_ENABLED: "true"
+      MAILER_BACKEND: console
+      CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_CHECKPOINTS: ${S3_BUCKET_CHECKPOINTS:-rangkul-checkpoints}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-rangkul}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-rangkul-dev-secret}
+      LOCAL_STORAGE_PATH: /code/storage
+      AI_USE_FAKE_MODELS: "true"
     depends_on:
-      - db
-    # We can override command for local live reload development
+      - redis
+      - minio
+      - minio-init
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A app.development_checkpoints.infrastructure.queue.celery_app worker -Q checkpoint.cpu,checkpoint.gpu,checkpoint.io,checkpoint.retention --loglevel=INFO
+    volumes:
+      - ./backend:/code
+    environment:
+      APP_NAME: Rangkul Backend API
+      DEBUG: "false"
+      ENVIRONMENT: development
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-development-secret-change-before-deploy}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_CHECKPOINTS: ${S3_BUCKET_CHECKPOINTS:-rangkul-checkpoints}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-rangkul}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-rangkul-dev-secret}
+      LOCAL_STORAGE_PATH: /code/storage
+      AI_USE_FAKE_MODELS: "true"
+    depends_on:
+      - redis
+      - minio
+      - minio-init
 
   frontend:
     build:
@@ -46,11 +100,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000
+      BACKEND_URL: http://backend:8000
     depends_on:
       - backend
     stdin_open: true
     tty: true
 
 volumes:
-  rangkul_postgres:
+  minio_data:

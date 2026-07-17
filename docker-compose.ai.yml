@@ -1,0 +1,24 @@
+services:
+  worker-cpu:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker-cpu
+    environment:
+      - AI_DEVICE=cpu
+      - AI_USE_FAKE_MODELS=True
+    depends_on:
+      - redis
+      - postgres
+
+  worker-gpu:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker-gpu
+    environment:
+      - AI_DEVICE=cuda
+      - AI_USE_FAKE_MODELS=False
+    profiles:
+      - gpu
+    depends_on:
+      - redis
+      - postgres

@@ -140,3 +140,220 @@ class IdempotencyRecord(Base):
     response_body: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class CheckpointTemplate(Base):
+    __tablename__ = "checkpoint_templates"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    code: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    modality: Mapped[str] = mapped_column(String(64), nullable=False)
+    instruction_text: Mapped[str] = mapped_column(Text, nullable=False)
+    instruction_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    expected_phases: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    metric_schema: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    quality_requirements: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class ConsentSnapshot(Base):
+    __tablename__ = "consent_snapshots"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    person_profile_id: Mapped[str] = mapped_column(ForeignKey("person_profiles.id", ondelete="CASCADE"), index=True, nullable=False)
+    captured_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    capture: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    analysis: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    professional_sharing: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    raw_retention_mode: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class DevelopmentCheckpoint(Base):
+    __tablename__ = "development_checkpoints"
+    __table_args__ = (
+        UniqueConstraint("person_profile_id", "client_request_id", name="uq_development_checkpoints_client_request"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    person_profile_id: Mapped[str] = mapped_column(ForeignKey("person_profiles.id", ondelete="CASCADE"), index=True, nullable=False)
+    template_id: Mapped[str] = mapped_column(ForeignKey("checkpoint_templates.id"), index=True, nullable=False)
+    captured_by_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    recommendation_target_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    capture_mode: Mapped[str] = mapped_column(String(64), nullable=False)
+    modality: Mapped[str] = mapped_column(String(64), nullable=False)
+    capture_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    overall_quality_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    processing_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    raw_retention_mode: Mapped[str] = mapped_column(String(64), nullable=False)
+    client_request_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    consent_snapshot_id: Mapped[str] = mapped_column(ForeignKey("consent_snapshots.id"), nullable=False)
+    trend_badge: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointAsset(Base):
+    __tablename__ = "checkpoint_assets"
+    __table_args__ = (UniqueConstraint("checkpoint_id", "object_key", name="uq_checkpoint_assets_object"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), index=True, nullable=False)
+    object_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(255), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    sha256: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    upload_status: Mapped[str] = mapped_column(String(64), default="presigned", nullable=False)
+    retention_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointAnalysisJob(Base):
+    __tablename__ = "checkpoint_analysis_jobs"
+    __table_args__ = (UniqueConstraint("idempotency_key", name="uq_checkpoint_analysis_jobs_idempotency_key"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), index=True, nullable=False)
+    processing_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    queue_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    step: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(64), nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class AIModelRegistry(Base):
+    __tablename__ = "ai_model_registry"
+    __table_args__ = (UniqueConstraint("model_key", "model_revision", name="uq_ai_model_registry_key_revision"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    model_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    model_revision: Mapped[str] = mapped_column(String(255), nullable=False)
+    feature_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding_dimension: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointSpeechResult(Base):
+    __tablename__ = "checkpoint_speech_results"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    processing_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    transcript: Mapped[str] = mapped_column(Text, nullable=False)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    model_registry_id: Mapped[str | None] = mapped_column(ForeignKey("ai_model_registry.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointSpeechEmbedding(Base):
+    __tablename__ = "checkpoint_speech_embeddings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    embedding: Mapped[list[float] | None] = mapped_column(JSON, default=list, nullable=True)
+    model_registry_id: Mapped[str | None] = mapped_column(ForeignKey("ai_model_registry.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointFaceResult(Base):
+    __tablename__ = "checkpoint_face_results"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    processing_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    model_registry_id: Mapped[str | None] = mapped_column(ForeignKey("ai_model_registry.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointFaceEmbedding(Base):
+    __tablename__ = "checkpoint_face_embeddings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    embedding: Mapped[list[float] | None] = mapped_column(JSON, default=list, nullable=True)
+    model_registry_id: Mapped[str | None] = mapped_column(ForeignKey("ai_model_registry.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointPoseSequence(Base):
+    __tablename__ = "checkpoint_pose_sequences"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    object_key: Mapped[str] = mapped_column(String(512), nullable=False)
+    format: Mapped[str] = mapped_column(String(32), default="npz", nullable=False)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointMotionEmbedding(Base):
+    __tablename__ = "checkpoint_motion_embeddings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    embedding: Mapped[list[float] | None] = mapped_column(JSON, default=list, nullable=True)
+    model_registry_id: Mapped[str | None] = mapped_column(ForeignKey("ai_model_registry.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointEventSegment(Base):
+    __tablename__ = "checkpoint_event_segments"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), index=True, nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    phase_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    start_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    end_ms: Mapped[int] = mapped_column(Integer, nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointReferenceComparison(Base):
+    __tablename__ = "checkpoint_reference_comparisons"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointReport(Base):
+    __tablename__ = "checkpoint_reports"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    processing_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    report_payload: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    status: Mapped[str] = mapped_column(String(64), default="draft", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class CheckpointTrendSnapshot(Base):
+    __tablename__ = "checkpoint_trend_snapshots"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    person_profile_id: Mapped[str] = mapped_column(ForeignKey("person_profiles.id", ondelete="CASCADE"), index=True, nullable=False)
+    checkpoint_id: Mapped[str] = mapped_column(ForeignKey("development_checkpoints.id", ondelete="CASCADE"), unique=True, nullable=False)
+    snapshot: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class OutboxEvent(Base):
+    __tablename__ = "outbox_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    topic: Mapped[str] = mapped_column(String(120), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
