@@ -49,8 +49,21 @@ export interface FacilityReport {
 
 export type FacilityInput = Omit<Facility, "id" | "stale" | "distance_km">;
 
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const resolveApiBase = () => {
+  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return `http://${hostname}:8000/api/v1`;
+    }
+  }
+
+  return "http://localhost:8000/api/v1";
+};
+
+export const API_BASE = resolveApiBase();
 
 export const categoryLabels: Record<Facility["category"], string> = {
   hospital: "Rumah sakit",

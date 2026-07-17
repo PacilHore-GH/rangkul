@@ -157,14 +157,14 @@ export default function FacilitySearchPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="mb-8 max-w-3xl">
-        <p className="mb-2 text-sm font-semibold text-indigo-300">Hospital & Therapy Navigator</p>
+        <p className="mb-2 text-sm font-semibold text-link">Layanan kesehatan & terapi</p>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Temukan layanan yang relevan</h1>
-        <p className="mt-3 text-slate-400">
-          Cari rumah sakit, klinik, pusat terapi, dan sekolah inklusif. Data saat ini adalah demonstrasi dan belum diverifikasi.
+        <p className="mt-3 text-secondary">
+          Temukan rumah sakit, klinik, pusat terapi, dan sekolah inklusif berdasarkan kebutuhan keluarga. Hasil saat ini menggunakan data demonstrasi yang perlu dikonfirmasi langsung.
         </p>
       </div>
 
-      <form onSubmit={submit} className="mb-8 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <form onSubmit={submit} className="mb-8 rounded-2xl border border-default-border bg-surface p-5">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <label className="text-sm font-medium">
             Nama atau layanan
@@ -173,7 +173,7 @@ export default function FacilitySearchPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Contoh: fisioterapi"
               maxLength={100}
-              className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 outline-none focus:border-indigo-400"
+              className="mt-2 min-h-11 w-full rounded-xl border border-strong-border bg-canvas px-3 outline-none focus:border-focus"
             />
           </label>
           <label className="text-sm font-medium">
@@ -183,7 +183,7 @@ export default function FacilitySearchPage() {
               onChange={(event) => setRegion(event.target.value)}
               placeholder="Contoh: Bandung"
               maxLength={100}
-              className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 outline-none focus:border-indigo-400"
+              className="mt-2 min-h-11 w-full rounded-xl border border-strong-border bg-canvas px-3 outline-none focus:border-focus"
             />
           </label>
           <label className="text-sm font-medium">
@@ -191,7 +191,7 @@ export default function FacilitySearchPage() {
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 outline-none focus:border-indigo-400"
+              className="mt-2 min-h-11 w-full rounded-xl border border-strong-border bg-canvas px-3 outline-none focus:border-focus"
             >
               <option value="">Semua jenis</option>
               <option value="hospital">Rumah sakit</option>
@@ -207,7 +207,7 @@ export default function FacilitySearchPage() {
               onChange={(event) => setService(event.target.value)}
               placeholder="Contoh: terapi wicara"
               maxLength={100}
-              className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 outline-none focus:border-indigo-400"
+              className="mt-2 min-h-11 w-full rounded-xl border border-strong-border bg-canvas px-3 outline-none focus:border-focus"
             />
           </label>
           <label className="flex min-h-11 items-center gap-3 text-sm">
@@ -223,7 +223,7 @@ export default function FacilitySearchPage() {
             <select
               value={accessibility}
               onChange={(event) => setAccessibility(event.target.value)}
-              className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 outline-none focus:border-indigo-400"
+              className="mt-2 min-h-11 w-full rounded-xl border border-strong-border bg-canvas px-3 outline-none focus:border-focus"
             >
               <option value="">Semua</option>
               <option value="wheelchair_access">Akses kursi roda</option>
@@ -233,37 +233,37 @@ export default function FacilitySearchPage() {
             </select>
           </label>
           <div className="flex flex-wrap items-end gap-2">
-            <button type="submit" disabled={loading} className="min-h-11 flex-1 rounded-lg bg-indigo-600 px-4 font-semibold hover:bg-indigo-500 disabled:opacity-60">
+            <button type="submit" disabled={loading} className="min-h-11 flex-1 rounded-xl bg-brand-primary px-4 font-semibold text-inverse-text hover:bg-brand-primary-hover disabled:opacity-60">
               {loading ? "Mencari…" : "Cari"}
             </button>
-            <button type="button" onClick={showCurrentLocation} className="min-h-11 rounded-lg border border-slate-700 px-3 hover:bg-slate-800">
+            <button type="button" onClick={showCurrentLocation} className="min-h-11 rounded-xl border border-strong-border px-3 hover:bg-subtle">
               Lokasi saya
             </button>
-            <button type="button" onClick={searchNearby} className="min-h-11 rounded-lg border border-slate-700 px-3 hover:bg-slate-800">
+            <button type="button" onClick={searchNearby} className="min-h-11 rounded-xl border border-strong-border px-3 hover:bg-subtle">
               Di sekitar saya
             </button>
           </div>
         </div>
-        {locationMessage && <p className="mt-3 text-sm text-slate-400" role="status">{locationMessage}</p>}
+        {locationMessage && <p className="mt-3 text-sm text-secondary" role="status">{locationMessage}</p>}
       </form>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-400" aria-live="polite">
+        <p className="text-sm text-secondary" aria-live="polite">
           {loading ? "Memuat hasil…" : `${visibleItems.length} fasilitas ditampilkan${nearbySearch ? " dalam radius 100 km" : ""}`}
         </p>
         <div className="flex flex-wrap gap-2">
           {nearbySearch && (
-            <button onClick={showAllFacilities} className="min-h-11 rounded-lg bg-indigo-600 px-4 text-sm font-semibold hover:bg-indigo-500">
+            <button onClick={showAllFacilities} className="min-h-11 rounded-xl bg-brand-primary px-4 text-sm font-semibold text-inverse-text hover:bg-brand-primary-hover">
               Lihat semua fasilitas
             </button>
           )}
-          <button onClick={() => setSavedOnly((value) => !value)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">
+          <button onClick={() => setSavedOnly((value) => !value)} className="min-h-11 rounded-xl border border-strong-border px-4 text-sm hover:bg-subtle">
             {savedOnly ? "Tampilkan semua" : `Tersimpan (${saved.length})`}
           </button>
           <Link
             aria-disabled={selected.length < 2}
             href={selected.length >= 2 ? `/app/services/compare?ids=${selected.join(",")}` : "#"}
-            className={`flex min-h-11 items-center rounded-lg px-4 text-sm font-semibold ${selected.length >= 2 ? "bg-emerald-600 hover:bg-emerald-500" : "cursor-not-allowed bg-slate-800 text-slate-500"}`}
+            className={`flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold ${selected.length >= 2 ? "bg-brand-primary text-inverse-text hover:bg-brand-primary-hover" : "cursor-not-allowed bg-subtle text-secondary"}`}
           >
             Bandingkan ({selected.length}/4)
           </Link>
@@ -271,28 +271,28 @@ export default function FacilitySearchPage() {
       </div>
 
       {error && (
-        <div role="alert" className="mb-6 rounded-xl border border-rose-500/40 bg-rose-950/30 p-4 text-rose-200">
+        <div role="alert" className="mb-6 rounded-xl border border-error/30 bg-surface p-4 text-error">
           <p>{error === "server" ? "Server sedang bermasalah." : "Tidak dapat terhubung ke layanan."} Daftar terakhir tetap ditampilkan bila tersedia.</p>
-          <button onClick={() => void load()} className="mt-3 min-h-11 rounded-lg border border-rose-400/50 px-4">Coba lagi</button>
+          <button onClick={() => void load()} className="mt-3 min-h-11 rounded-xl border border-error/40 px-4">Coba lagi</button>
         </div>
       )}
 
       {!mapFacility && !coordinates && (
-        <section aria-labelledby="map-title" className="mb-8 rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
+        <section aria-labelledby="map-title" className="mb-8 rounded-2xl border border-dashed border-strong-border bg-subtle/70 p-8 text-center">
           <h2 id="map-title" className="font-semibold">Peta lokasi</h2>
-          <p className="mt-2 text-sm text-slate-400">Pilih “Lokasi saya” untuk menampilkan posisi, atau “Di sekitar saya” untuk memfilter fasilitas dalam radius 100 km.</p>
+          <p className="mt-2 text-sm text-secondary">Pilih “Lokasi saya” untuk menampilkan posisi, atau “Di sekitar saya” untuk memfilter fasilitas dalam radius 100 km.</p>
         </section>
       )}
 
       {(mapFacility || coordinates) && (
-        <section aria-labelledby="map-title" className="mb-8 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+        <section aria-labelledby="map-title" className="mb-8 overflow-hidden rounded-2xl border border-default-border bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <h2 id="map-title" className="font-semibold">{mapFacility ? `Peta: ${mapFacility.name}` : "Lokasi Anda"}</h2>
-              <p className="mt-1 text-sm text-slate-400">Daftar di bawah tetap dapat digunakan jika peta gagal dimuat.</p>
+              <p className="mt-1 text-sm text-secondary">Daftar di bawah tetap dapat digunakan jika peta gagal dimuat.</p>
             </div>
             {mapFacility && coordinates && (
-              <button onClick={() => setMapFacility(null)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">Kembali ke lokasi saya</button>
+              <button onClick={() => setMapFacility(null)} className="min-h-11 rounded-xl border border-strong-border px-4 text-sm hover:bg-subtle">Kembali ke lokasi saya</button>
             )}
           </div>
           <iframe
@@ -306,19 +306,19 @@ export default function FacilitySearchPage() {
       )}
 
       {!loading && visibleItems.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-700 p-10 text-center">
+        <div className="rounded-2xl border border-dashed border-strong-border p-10 text-center">
           <h2 className="text-lg font-semibold">Belum ada fasilitas yang cocok</h2>
-          <p className="mt-2 text-slate-400">Kurangi filter atau tampilkan kembali semua fasilitas.</p>
+          <p className="mt-2 text-secondary">Kurangi filter atau tampilkan kembali semua fasilitas.</p>
         </div>
       ) : (
         <section aria-label="Hasil pencarian" className="grid gap-4 lg:grid-cols-2">
           {visibleItems.map((facility) => (
-            <article key={facility.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+            <article key={facility.id} className="rounded-2xl border border-default-border bg-surface p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-300">{categoryLabels[facility.category]}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-link">{categoryLabels[facility.category]}</p>
                   <h2 className="mt-1 text-xl font-bold">{facility.name}</h2>
-                  <p className="mt-1 text-sm text-slate-400">{facility.city}, {facility.province}{facility.distance_km !== null ? ` · ${facility.distance_km} km` : ""}</p>
+                  <p className="mt-1 text-sm text-secondary">{facility.city}, {facility.province}{facility.distance_km !== null ? ` · ${facility.distance_km} km` : ""}</p>
                 </div>
                 <label className="flex min-h-11 items-center gap-2 text-xs">
                   <input
@@ -331,17 +331,17 @@ export default function FacilitySearchPage() {
                   Pilih
                 </label>
               </div>
-              {facility.stale && <p className="mt-3 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200">Data kedaluwarsa—konfirmasi langsung ke fasilitas.</p>}
-              <p className="mt-4 text-sm leading-6 text-slate-300">{facility.description}</p>
+              {facility.stale && <p className="mt-3 rounded-xl border border-warning/30 bg-surface p-3 text-sm text-warning">Data kedaluwarsa—konfirmasi langsung ke fasilitas.</p>}
+              <p className="mt-4 text-sm leading-6 text-primary">{facility.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">
-                {facility.services.map((item) => <span key={item.code} className="rounded-full bg-slate-800 px-3 py-1 text-xs">{item.name}</span>)}
+                {facility.services.map((item) => <span key={item.code} className="rounded-full bg-subtle px-3 py-1 text-xs text-primary">{item.name}</span>)}
               </div>
-              <p className="mt-4 text-xs text-slate-500">Sumber: {facility.source_name} · diperbarui {facility.source_updated_at}</p>
+              <p className="mt-4 text-xs text-secondary">Sumber: {facility.source_name} · diperbarui {facility.source_updated_at}</p>
               <div className="mt-5 flex flex-wrap gap-2">
-                <Link href={`/app/services/${facility.id}`} className="flex min-h-11 items-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold hover:bg-indigo-500">Lihat detail</Link>
-                <a href={googleMapsDirectionsUrl(facility)} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center rounded-lg bg-emerald-600 px-4 text-sm font-semibold hover:bg-emerald-500">Buka rute</a>
-                <button onClick={() => setMapFacility(facility)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">Lihat di peta</button>
-                <button onClick={() => toggleSaved(facility.id)} className="min-h-11 rounded-lg border border-slate-700 px-4 text-sm hover:bg-slate-800">
+                <Link href={`/app/services/${facility.id}`} className="flex min-h-11 items-center rounded-xl bg-brand-primary px-4 text-sm font-semibold text-inverse-text hover:bg-brand-primary-hover">Lihat detail</Link>
+                <a href={googleMapsDirectionsUrl(facility)} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center rounded-xl bg-brand-primary px-4 text-sm font-semibold text-inverse-text hover:bg-brand-primary-hover">Buka rute</a>
+                <button onClick={() => setMapFacility(facility)} className="min-h-11 rounded-xl border border-strong-border px-4 text-sm hover:bg-subtle">Lihat di peta</button>
+                <button onClick={() => toggleSaved(facility.id)} className="min-h-11 rounded-xl border border-strong-border px-4 text-sm hover:bg-subtle">
                   {saved.includes(facility.id) ? "Hapus simpanan" : "Simpan"}
                 </button>
               </div>
@@ -351,7 +351,7 @@ export default function FacilitySearchPage() {
       )}
 
       {nextCursor && !savedOnly && (
-        <button onClick={() => void load(nextCursor, true)} disabled={loading} className="mt-6 min-h-11 w-full rounded-lg border border-slate-700 px-4 hover:bg-slate-900 disabled:opacity-60">
+        <button onClick={() => void load(nextCursor, true)} disabled={loading} className="mt-6 min-h-11 w-full rounded-xl border border-strong-border px-4 hover:bg-surface disabled:opacity-60">
           Muat lebih banyak
         </button>
       )}

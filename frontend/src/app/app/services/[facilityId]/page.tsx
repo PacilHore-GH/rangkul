@@ -48,15 +48,15 @@ export default function FacilityDetailPage() {
   }, [facilityId]);
 
   if (loading) {
-    return <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6" aria-busy="true"><div className="h-64 animate-pulse rounded-2xl bg-slate-900 motion-reduce:animate-none" /></main>;
+    return <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6" aria-busy="true"><div className="h-64 animate-pulse rounded-2xl bg-surface motion-reduce:animate-none" /></main>;
   }
 
   if (error || !facility) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-12 text-center sm:px-6">
         <h1 className="text-2xl font-bold">Fasilitas tidak dapat ditampilkan</h1>
-        <p className="mt-2 text-slate-400">Periksa koneksi atau kembali ke hasil pencarian.</p>
-        <Link href="/app/services/search" className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-indigo-600 px-4 font-semibold">Kembali mencari</Link>
+        <p className="mt-2 text-secondary">Periksa koneksi atau kembali ke hasil pencarian.</p>
+        <Link href="/app/services/search" className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-brand-primary px-4 font-semibold text-inverse-text">Kembali mencari</Link>
       </main>
     );
   }
@@ -82,37 +82,37 @@ export default function FacilityDetailPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <Link href="/app/services/search" className="inline-flex min-h-11 items-center text-sm text-indigo-300 hover:text-indigo-200">← Kembali ke pencarian</Link>
-      <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+      <Link href="/app/services/search" className="inline-flex min-h-11 items-center text-sm text-link hover:text-link">← Kembali ke pencarian</Link>
+      <div className="mt-4 rounded-2xl border border-default-border bg-surface p-6 sm:p-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div>
-            <p className="text-sm font-semibold text-indigo-300">{categoryLabels[facility.category]}</p>
+            <p className="text-sm font-semibold text-link">{categoryLabels[facility.category]}</p>
             <h1 className="mt-2 text-3xl font-bold">{facility.name}</h1>
-            <p className="mt-3 text-slate-400">{facility.address}</p>
+            <p className="mt-3 text-secondary">{facility.address}</p>
           </div>
-          <button onClick={toggleSaved} className="min-h-11 rounded-lg border border-slate-700 px-4 font-semibold hover:bg-slate-800">
+          <button onClick={toggleSaved} className="min-h-11 rounded-xl border border-strong-border px-4 font-semibold hover:bg-subtle">
             {saved ? "Hapus simpanan" : "Simpan fasilitas"}
           </button>
         </div>
 
-        {facility.stale && <div role="alert" className="mt-6 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-100">Informasi ini melewati masa berlaku. Konfirmasi langsung sebelum membuat keputusan.</div>}
-        <p className="mt-6 leading-7 text-slate-300">{facility.description}</p>
+        {facility.stale && <div role="alert" className="mt-6 rounded-xl border border-warning/30 bg-surface p-4 text-warning">Informasi ini melewati masa berlaku. Konfirmasi langsung sebelum membuat keputusan.</div>}
+        <p className="mt-6 leading-7 text-primary">{facility.description}</p>
 
-        <dl className="mt-8 grid gap-4 rounded-xl bg-slate-950 p-5 sm:grid-cols-2">
-          <div><dt className="text-xs uppercase text-slate-500">Telepon</dt><dd className="mt-1">{facility.phone || "Belum tersedia"}</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">Status verifikasi</dt><dd className="mt-1">{facility.verification_status === "verified" ? "Terverifikasi" : "Belum terverifikasi"}</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">Sumber</dt><dd className="mt-1">{facility.source_name}</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">Berlaku sampai</dt><dd className="mt-1">{facility.valid_until}</dd></div>
+        <dl className="mt-8 grid gap-4 rounded-xl bg-canvas p-5 sm:grid-cols-2">
+          <div><dt className="text-xs uppercase text-secondary">Telepon</dt><dd className="mt-1">{facility.phone || "Belum tersedia"}</dd></div>
+          <div><dt className="text-xs uppercase text-secondary">Status verifikasi</dt><dd className="mt-1">{facility.verification_status === "verified" ? "Terverifikasi" : "Belum terverifikasi"}</dd></div>
+          <div><dt className="text-xs uppercase text-secondary">Sumber</dt><dd className="mt-1">{facility.source_name}</dd></div>
+          <div><dt className="text-xs uppercase text-secondary">Berlaku sampai</dt><dd className="mt-1">{facility.valid_until}</dd></div>
         </dl>
       </div>
 
-      <section aria-labelledby="services-title" className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+      <section aria-labelledby="services-title" className="mt-6 rounded-2xl border border-default-border bg-surface p-6 sm:p-8">
         <h2 id="services-title" className="text-2xl font-bold">Layanan tersedia</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           {facility.services.map((service) => (
-            <article key={service.code} className="rounded-xl border border-slate-800 bg-slate-950 p-5">
+            <article key={service.code} className="rounded-xl border border-default-border bg-canvas p-5">
               <h3 className="font-semibold">{service.name}</h3>
-              <ul className="mt-3 space-y-1 text-sm text-slate-400">
+              <ul className="mt-3 space-y-1 text-sm text-secondary">
                 <li>Usia: {service.age_min}–{service.age_max ?? "dewasa"} tahun</li>
                 <li>BPJS: {service.accepts_bpjs ? "Ya" : "Belum tercatat"}</li>
                 <li>Pendaftaran online: {service.online_booking ? "Ya" : "Belum tercatat"}</li>
@@ -123,22 +123,22 @@ export default function FacilityDetailPage() {
         </div>
       </section>
 
-      <section aria-labelledby="location-title" className="mt-6 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+      <section aria-labelledby="location-title" className="mt-6 overflow-hidden rounded-2xl border border-default-border bg-surface">
         <div className="p-6">
           <h2 id="location-title" className="text-2xl font-bold">Lokasi</h2>
-          <p className="mt-2 text-sm text-slate-400">Jika peta tidak tersedia, gunakan alamat tertulis di atas.</p>
-          <a href={googleMapsDirectionsUrl(facility)} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-emerald-600 px-4 font-semibold hover:bg-emerald-500">Buka rute di Google Maps</a>
+          <p className="mt-2 text-sm text-secondary">Jika peta tidak tersedia, gunakan alamat tertulis di atas.</p>
+          <a href={googleMapsDirectionsUrl(facility)} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-brand-primary px-4 font-semibold text-inverse-text hover:bg-brand-primary-hover">Buka rute di Google Maps</a>
         </div>
         <iframe title={`Peta ${facility.name}`} src={osmEmbedUrl(facility)} className="h-80 w-full border-0" loading="lazy" referrerPolicy="no-referrer" />
       </section>
 
-      <section aria-labelledby="report-title" className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+      <section aria-labelledby="report-title" className="mt-6 rounded-2xl border border-default-border bg-surface p-6 sm:p-8">
         <h2 id="report-title" className="text-2xl font-bold">Laporkan informasi yang salah</h2>
-        <p className="mt-2 text-sm text-slate-400">Laporan membantu tim memeriksa ulang data. Laporan tidak langsung mengubah informasi publik.</p>
+        <p className="mt-2 text-sm text-secondary">Laporan membantu tim memeriksa ulang data. Laporan tidak langsung mengubah informasi publik.</p>
         <form onSubmit={submitReport} className="mt-5 max-w-2xl space-y-4">
           <label className="block text-sm font-medium">
             Jenis masalah
-            <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3">
+            <select value={reportReason} onChange={(event) => setReportReason(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-strong-border bg-canvas px-3">
               <option value="wrong_information">Informasi salah</option>
               <option value="closed">Fasilitas tutup</option>
               <option value="contact">Kontak tidak aktif</option>
@@ -156,12 +156,12 @@ export default function FacilityDetailPage() {
               required
               rows={4}
               placeholder="Jelaskan informasi yang perlu diperiksa (minimal 10 karakter)."
-              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 p-3 outline-none focus:border-indigo-400"
+              className="mt-2 w-full rounded-xl border border-strong-border bg-canvas p-3 outline-none focus:border-focus"
             />
           </label>
-          {reportStatus === "success" && <p role="status" className="rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-200">Laporan berhasil diterima. Terima kasih.</p>}
-          {reportStatus === "error" && <p role="alert" className="rounded-lg bg-rose-500/10 p-3 text-sm text-rose-200">Laporan gagal dikirim. Silakan coba lagi.</p>}
-          <button type="submit" disabled={reporting || reportDetails.trim().length < 10} className="min-h-11 rounded-lg bg-indigo-600 px-5 font-semibold hover:bg-indigo-500 disabled:opacity-50">
+          {reportStatus === "success" && <p role="status" className="rounded-xl bg-subtle p-3 text-sm text-success">Laporan berhasil diterima. Terima kasih.</p>}
+          {reportStatus === "error" && <p role="alert" className="rounded-xl bg-surface p-3 text-sm text-error">Laporan gagal dikirim. Silakan coba lagi.</p>}
+          <button type="submit" disabled={reporting || reportDetails.trim().length < 10} className="min-h-11 rounded-xl bg-brand-primary px-5 font-semibold text-inverse-text hover:bg-brand-primary-hover disabled:opacity-50">
             {reporting ? "Mengirim…" : "Kirim laporan"}
           </button>
         </form>

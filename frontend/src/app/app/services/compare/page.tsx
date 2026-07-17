@@ -40,14 +40,14 @@ function Comparison() {
   }, [idsParam]);
 
   if (loading) {
-    return <div className="h-72 animate-pulse rounded-2xl bg-slate-900 motion-reduce:animate-none" aria-label="Memuat perbandingan" />;
+    return <div className="h-72 animate-pulse rounded-2xl bg-surface motion-reduce:animate-none" aria-label="Memuat perbandingan" />;
   }
 
   if (error) {
     return (
-      <div role="alert" className="rounded-2xl border border-rose-500/40 bg-rose-950/20 p-8 text-center">
-        <p className="text-rose-100">{error}</p>
-        <Link href="/app/services/search" className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-indigo-600 px-4 font-semibold">Pilih fasilitas</Link>
+      <div role="alert" className="rounded-2xl border border-error/30 bg-surface p-8 text-center">
+        <p className="text-error">{error}</p>
+        <Link href="/app/services/search" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-brand-primary px-4 font-semibold text-inverse-text">Pilih fasilitas</Link>
       </div>
     );
   }
@@ -64,46 +64,68 @@ function Comparison() {
   ];
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-800">
-      <table className="min-w-[760px] w-full border-collapse bg-slate-900 text-left text-sm">
-        <caption className="sr-only">Perbandingan fasilitas terpilih</caption>
-        <thead>
-          <tr className="border-b border-slate-700">
-            <th scope="col" className="w-44 p-4 text-slate-400">Kriteria</th>
-            {facilities.map((facility) => (
-              <th scope="col" key={facility.id} className="min-w-56 p-4 align-top">
-                <Link href={`/app/services/${facility.id}`} className="text-base text-indigo-300 hover:underline">{facility.name}</Link>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.label} className="border-b border-slate-800 last:border-0">
-              <th scope="row" className="p-4 font-medium text-slate-400">{row.label}</th>
+    <>
+      <div className="grid gap-4 md:hidden">
+        {facilities.map((facility) => (
+          <article key={facility.id} className="rounded-2xl border border-default-border bg-surface p-5">
+            <Link href={`/app/services/${facility.id}`} className="text-lg font-semibold text-link hover:underline">
+              {facility.name}
+            </Link>
+            <dl className="mt-4 divide-y divide-default-border">
+              {rows.map((row) => (
+                <div key={row.label} className="grid gap-1 py-3 first:pt-0 last:pb-0">
+                  <dt className="text-sm font-medium text-secondary">{row.label}</dt>
+                  <dd className={row.label === "Kesegaran data" && facility.stale ? "text-sm text-warning" : "text-sm text-primary"}>
+                    {row.value(facility)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-2xl border border-default-border md:block">
+        <table className="min-w-[760px] w-full border-collapse bg-surface text-left text-sm">
+          <caption className="sr-only">Perbandingan fasilitas terpilih</caption>
+          <thead>
+            <tr className="border-b border-strong-border bg-subtle/60">
+              <th scope="col" className="w-44 p-4 text-secondary">Kriteria</th>
               {facilities.map((facility) => (
-                <td key={facility.id} className={`p-4 align-top ${row.label === "Kesegaran data" && facility.stale ? "text-amber-200" : "text-slate-200"}`}>
-                  {row.value(facility)}
-                </td>
+                <th scope="col" key={facility.id} className="min-w-56 p-4 align-top">
+                  <Link href={`/app/services/${facility.id}`} className="text-base text-link hover:underline">{facility.name}</Link>
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.label} className="border-b border-default-border last:border-0">
+                <th scope="row" className="p-4 font-medium text-secondary">{row.label}</th>
+                {facilities.map((facility) => (
+                  <td key={facility.id} className={`p-4 align-top ${row.label === "Kesegaran data" && facility.stale ? "text-warning" : "text-primary"}`}>
+                    {row.value(facility)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
 export default function ComparePage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <Link href="/app/services/search" className="inline-flex min-h-11 items-center text-sm text-indigo-300">← Kembali memilih</Link>
+      <Link href="/app/services/search" className="inline-flex min-h-11 items-center text-sm text-link">← Kembali memilih</Link>
       <div className="mb-8 mt-4">
-        <p className="text-sm font-semibold text-indigo-300">Perbandingan</p>
+        <p className="text-sm font-semibold text-link">Perbandingan</p>
         <h1 className="mt-2 text-3xl font-bold">Bandingkan fasilitas</h1>
-        <p className="mt-3 text-slate-400">Periksa layanan, aksesibilitas, BPJS, sumber, dan kesegaran data berdampingan.</p>
+        <p className="mt-3 text-secondary">Periksa layanan, aksesibilitas, BPJS, sumber, dan kesegaran data berdampingan.</p>
       </div>
-      <Suspense fallback={<div className="h-72 animate-pulse rounded-2xl bg-slate-900 motion-reduce:animate-none" />}>
+      <Suspense fallback={<div className="h-72 animate-pulse rounded-2xl bg-surface motion-reduce:animate-none" />}>
         <Comparison />
       </Suspense>
     </main>
